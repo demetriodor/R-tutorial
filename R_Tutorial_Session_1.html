@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>R for Data Analysis: A Short Tutorial</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dimiter Toshkov" />
+    <link href="libs/remark-css/metropolis-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: top, left, inverse, title-slide
+
+# R for Data Analysis: A Short Tutorial
+## Session 1: Introduction to R
+### Dimiter Toshkov
+### Institute of Public Administration, Leiden University
+### last updated: 2020-01-29
+
+---
+
+
+
+# What do you need to know about me?
+--
+My name is written *Димитър* and is pronounced *[diˈ mitər]*.
+
+--
+I am *not* a programmer.
+
+--
+I have done a fair bit of data analysis and some programming.
+
+--
+I like pictures.
+
+---
+class: center, inverse, top
+
+background-image: url("figs/mip_env_country.png")
+background-size: contain
+
+# Here is a picture that I like (done in R)
+
+---
+class: center, inverse, top
+
+background-image: url("http://dimiter.eu/thumb/DSC_3484.jpg")
+background-size: contain
+
+# This is not done in R (yes, there's [more](http://dimiter.eu/Photos.html))
+
+---
+# What is R?
+
+--
+## R is the best thing since sliced bread,
+
+--
+class: center
+
+&lt;img src="https://cran.r-project.org/Rlogo.svg" width="300"&gt;    &lt;img src="https://www.abelandcole.co.uk/media/3029_15898_z.jpg" width="300"&gt;
+
+--
+class: left
+
+## only much better, because...
+
+--
+.left[unlike bread, it combines *functional*  with *object-oriented* programming,]
+
+--
+.left[and it is not sliced, but modular, so that it can be easily extended with new packages.]
+
+---
+# Downsides of R
+
+--
+## It is called R.
+
+--
+## It regularly leads people into arguments about how good it is.
+
+
+---
+
+# What can you do with R?
+--
+## Run (m)any statistical models, including:
+- Bayseian models (e.g. with [STAN](https://mc-stan.org/users/interfaces/rstan))
+- Automated text analysis (e.g. with [qunateda](https://quanteda.io/)) and machine learning (e.g. with [tensorflow](https://cran.r-project.org/web/packages/tensorflow/index.html))
+
+--
+## Access data 
+- Directly from the web via APIs (e.g. [World Bank](https://cran.r-project.org/web/packages/wbstats/vignettes/Using_the_wbstats_package.html))
+- Scrape complex internet sites and databases (e.g. [EUR-Lex](https://eur-lex.europa.eu/))
+
+--
+## Do important things, such as
+- well-formatted conference programs from excel sheets
+- presentations like this one (with `RMarkdown` and [xaringan](https://cran.r-project.org/web/packages/xaringan/index.html))
+
+--
+## Do other nice things, such as
+- open reproducible science
+
+---
+# Art with R, by Katharina Brunner
+
+.center[![description of the image](figs/generativeart.png)]
+
+---
+# How can you learn to use R?
+--
+## 1. Get a good foundation.
+
+--
+## 2. Learn by doing,
+2.1 with lots of supprot form the R community on StackOverflow, blogs and Twitter,
+
+2.2 and adapting other people's code.
+
+--
+## 3. You can also get books.
+
+---
+# Recommended books
+
+&lt;img src="https://d33wubrfki0l68.cloudfront.net/b88ef926a004b0fce72b2526b0b5c4413666a4cb/24a30/cover.png" width="80"&gt; [R for Data Science](https://amzn.to/38NYJUr),  [link to a free version](https://r4ds.had.co.nz/)
+
+&lt;img src="https://images.tandf.co.uk/common/jackets/amazon/978081538/9780815384571.jpg" width="80"&gt; [Advanced R](https://amzn.to/2RDFBCM),  [link to a free version](http://adv-r.had.co.nz/)
+
+&lt;img src="http://www.cookbook-r.com/r_graphics_cookbook.png" width="80"&gt; [R Cookbook](https://amzn.to/2RE5hPT), [link to a free version](http://www.cookbook-r.com/)
+
+&lt;img src="https://s.s-bol.com/imgbase0/imagebase3/large/FC/3/2/3/8/1001004011728323.jpg" width="80"&gt; [The R Book](https://amzn.to/2GxmDrh), [link to a free version](https://www.cs.upc.edu/~robert/teaching/estadistica/TheRBook.pdf)
+---
+# What can you expect from this tutorial?
+
+--
+## Get started.
+
+--
+## Get a good foundation, hopefully.
+
+--
+## Learn enough so you can continue learning on your own.
+
+--
+## If you want something else, let me know.
+
+---
+# Organization of the meetings
+
+## Session 1: Introduction to R
+- Workflow
+- Fundamentals; objects and functions
+
+## Session 2: Data wrangling
+- Importing data
+- Restructuring datasets
+- Recoding variables
+- Merging and exporting data
+
+## Session 3: Data analysis
+- Data summary and simple linear models
+- Generalized linear models
+- Multi-level models
+- Data reduction: PCA and factor models
+
+## Session 4: Data visualization
+- with `plot`
+- with `ggplot2`
+
+---
+# By the end of the tutorial...
+
+## You should not think about working with any other software for your data work&lt;sup&gt;1&lt;/sup&gt;.
+
+
+.footnote[
+  [1] Unless you have to work with the uninitiated.
+    ]    
+  
+---
+# Let's get started
+--
+We can work with R directly (from the console), but it would be nice if we could save our work somehow.
+
+--
+We can use any text editor and *copy and paste* the code, but this gets boring pretty quickly.
+
+--
+So we use programs such as **R Studio** that integrate a text editor linked to **R** and some other nice features.
+We send commands we write in the text file using `Cntr+ENTER` to be exectued in the console.
+
+--
+*Protip 1*: Use an **R Studio** theme that highlights code (I use *modern*).
+
+*Protip 2*: **R Studio** has useful shortcuts (see them all with `Alt+Shift+K`). Learn and use some of them (e.g. `Cntr+1`/`Cntr+2`). 
+
+---
+# Files and projects
+We can start a file, write code, execute the code, and when we are happy, we can save the file (with a `.r` extension, but it remains a text file). 
+
+--
+This might be all we need for very small, simple and individual projects. (Btw, where is our work?)
+
+
+```r
+### Where are we?
+getwd() #oh, here
+setwd('C:/here') #better here
+```
+
+--
+But for more complex projects, you would want to start a *Project*. A project sets up the *working environment* and organizes things in a nice way. Within the project, you can (should) create separate folders for your code, input data, output data, plots, model results, and tables. The code itslef can (should) be separated in smaller files (e.g. one for the libraries and functions that you use, one for data import and manipulation, one for statistical analyses, etc.). 
+
+--
+Use relative, not absolute paths in your scripts to make collaborative work easier.
+
+
+```r
+### There are good and bad paths
+'./data/nl/zh/dh/students.csv' #this is a good path
+'C:/data/nl/zh/dh/students.csv' #this is a bad path
+```
+
+--
+We will say more about workflow (with `GitHub` and `RMarkdown`) later in this tutorial. 
+
+---
+# Some good practices
+--
+Take the time to annotate your code (using `#` to start a segment of a line that is not executed as code).
+
+--
+Think about the names of files and variables that you use. Have a system and be consistent. You can use `.`, or `_`, or capital letters, but stick to one.
+
+
+```r
+### How (not) to name your variables
+data.nl.denhaag.bezuidenhout #this is fine
+data_nl_denhaag_bezuidenhout #this is also fine
+DataNlDenhaagBezuidenhout #this is not so fine
+data.Nl_DenHaag_.bezuidenhout #this is definitely not fine
+```
+
+--
+Think about about how you name your scripts and other file names as well.
+
+*Protip 3*: Use `00_libraries.R`, `01_firstanalysis.R`, etc. to name your scripts in the order that they should be executed, so you can quickly sort them within the folder alphabetically.  
+
+---
+# Modularity
+
+R works with packages. 
+
+The default installation comes with basic functionality.
+
+For everything else, you install a package. 
+
+There are multiple packages that can achieve the same task.
+
+There is a special package called `tidyverse`, which together with some other associated packages developed by Hadley Wickham and company creates a convenient way to wrangle data. We will use these a lot.
+
+---
+# Working with packages
+
+Working with packages is easy:
+- first you have to install, from a **CRAN** repository, or from zip files, or via `devtools`. You can install with a command or from the **R Studio** menu. You install once on a computer (you migth need to update every now and then).
+
+- once the package is installed, you will want to load it with the `library()` function
+
+- you can also directly specify functions from packages for use, e.g. `dplyr::recode()`.
+
+
+```r
+### How to install and load a package
+install.packages('dplyr')
+library (dplyr)
+```
+
+--
+*Protip 4*: If you work with people who would not know how to install a package but would want to run your code, you can start your code with a function that will install and load packages automatically (see [here](https://stackoverflow.com/questions/4090169/elegant-way-to-check-for-missing-packages-and-install-them))
+
+*Protip 4a*: Don't do that with people who know their way around R. They don't like your script installing staff without their authorization.
+
+---
+# Assignment operators
+
+Perhaps the most fundamental operation in R is to assign a value to a named object: `object_name &lt;- value`. Be careful, R is sensitive; *case sensitive*, that is. 
+
+You can be old school&lt;sup&gt;1&lt;/sup&gt; and assign values to names with `&lt;-`. Or you can just use `=`. And if you are that cool, you can also use `-&gt;`.
+
+
+```r
+### There are different ways to assign
+best.month &lt;- 'August'
+best.date = 18
+1978 -&gt; best.year
+
+best.date
+```
+
+```
+## [1] 18
+```
+
+```r
+best.month
+```
+
+```
+## [1] "August"
+```
+
+```r
+best.year
+```
+
+```
+## [1] 1978
+```
+
+There are some subtle differences, if you are interested read [here](https://stackoverflow.com/questions/1741820/what-are-the-differences-between-and-assignment-operators-in-r).
+
+You also have the assignment operator `&lt;&lt;-`. This is most useful *'in conjunction with closures to maintain state'*. Exactly. If you want to know more, read [here](https://stackoverflow.com/questions/2628621/how-do-you-use-scoping-assignment-in-r).
+
+
+.footnote[
+  [1] "There is a general preference among the R community for using `&lt;-` for assignment (other than in function signatures) for compatibility with (very) old versions of S-Plus."]
+
+---
+# Vectors
+Vectors are one-dimensional collections of objects. 
+
+
+```r
+### How to make and check a vector
+v1&lt;-seq(1,50, by=5)
+v1
+```
+
+```
+##  [1]  1  6 11 16 21 26 31 36 41 46
+```
+
+```r
+v2&lt;-c('R','pie',5,NA)
+v2
+```
+
+```
+## [1] "R"   "pie" "5"   NA
+```
+
+```r
+is.vector(v1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.vector(v2)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.vector(c(is.vector(v1), is.vector(v2)))
+```
+
+```
+## [1] TRUE
+```
+
+There are several different types of vectors: *logical*, *character*, *numeric* (which can be *double* or *integer*), complex and raw. *Factors* and *dates* are augmented vectors that have a special attribute, their *'class'*.  
+
+
+```r
+### What vectors?
+typeof(v1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(v2)
+```
+
+```
+## [1] "character"
+```
+
+```r
+typeof(is.vector(c(is.vector(v1), is.vector(v2))))
+```
+
+```
+## [1] "logical"
+```
+
+```r
+typeof(c("1","2","4"))
+```
+
+```
+## [1] "character"
+```
+
+
+---
+# More on vectors
+
+*Proip 5*: In R, numbers are doubles by default. To make an integer, place an L after the number. This can save some trouble down the road. Alternatively, use `round()` when evaluating.
+
+```r
+### Floating point bizzaro
+0.3/3 == 0.1
+```
+
+```
+## [1] FALSE
+```
+
+```r
+round(0.3/3,1) == 0.1
+```
+
+```
+## [1] TRUE
+```
+
+```r
+unique(c(.3, .4 - .1, .5 - .2, .6 - .3, .7 - .4))
+```
+
+```
+## [1] 0.3 0.3 0.3
+```
+Integers have one special value: `NA`, while doubles have four: `NA`, `NaN`, `Inf` and `-Inf`. 
+
+```r
+c(-1, 0, 1) / 0     
+```
+
+```
+## [1] -Inf  NaN  Inf
+```
+
+---
+# Coercion
+
+Use can coerce one type of vector to another. But be careful of the consequences.
+
+
+```r
+v1&lt;-c(1,2,4)
+typeof(v1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+f1&lt;-as.factor(v1)
+f1
+```
+
+```
+## [1] 1 2 4
+## Levels: 1 2 4
+```
+
+```r
+n1&lt;-as.numeric(f1)
+is.numeric(n1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+n1 #OMG!!!
+```
+
+```
+## [1] 1 2 3
+```
+
+```r
+n2&lt;-as.numeric(as.character(f1))
+n2 #that's better!
+```
+
+```
+## [1] 1 2 4
+```
+
+Coercion happens without your help (and perhaps realisation) as well, everytime you mix vector elements of different types together. The most complex type prevails.
+
+```r
+v1&lt;-seq(1:999)
+is.numeric(v1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+length(v1) #vectors have length
+```
+
+```
+## [1] 999
+```
+
+```r
+v2&lt;-c(v1, '1000')
+is.numeric(v2)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+typeof(v2) #it only takes one
+```
+
+```
+## [1] "character"
+```
+
+Character vectors are the most complex type of atomic vector, because each element of a character vector is a string, and a string can contain an arbitrary amount of data.
+  
+---
+# Lists 
+
+Lists, also called recursive vectors, can contain all kinds of things, including other lists.
+
+
+`y &lt;- list("a", 1L, 1.5, TRUE)`
+
+[[ extracts a single component from a list. It removes a level of hierarchy from the list.
+   $ is a shorthand for extracting named elements of a list.
+   If you wanted to get the content of the pepper package, you’d need x[[1]][[1]]:
+     
+   df &lt;- data.frame(x = 1:5, y = 5:1)
+   typeof(df)
+   #&gt; [1] "list"
+   attributes(df)
+   #&gt; $names
+   #&gt; [1] "x" "y"
+   #&gt; 
+   #&gt; $class
+   #&gt; [1] "data.frame"
+   #&gt; 
+   #&gt; $row.names
+   #&gt; [1] 1 2 3 4 5
+
+---
+# LOOPS
+   output &lt;- vector("double", ncol(df))  # 1. output
+   for (i in seq_along(df)) {            # 2. sequence
+     output[[i]] &lt;- median(df[[i]])      # 3. body
+   }
+   output
+   #&gt; [1] -0.2458 -0.2873 -0.0567  0.1443
+   
+---
+# Functions
+The idea of passing a function to another function is an extremely powerful idea, and it’s one of the behaviours that makes R a functional programming language. It might take you a while to wrap your head around the idea, but it’s worth the investment. In the rest of the chapter, you’ll learn about and use the purrr package, which provides functions that eliminate the need for many common for loops. The apply family of functions in base R (apply(), lapply(), tapply(), etc) solve a similar problem, but purrr is more consistent and thus is easier to learn.
+   
+
+Objects are staff with names and values
+Functions do things to objecs
+function_name(arg1 = val1, arg2 = val2, ...)
+
+---
+# Comparisons (evaluation)
+   R provides the standard suite: &gt;, &gt;=, &lt;, &lt;=, != (not equal), and == (equal).
+   
+   near(sqrt(2) ^ 2,  2)
+   
+   Logical operators
+   &amp; is “and”, | is “or”, and ! is “not”. xor
+   
+   Missing values
+   almost any operation involving an unknown value will also be unknown.
+   is.na(x)
+   
+---
+# Useful functions
+   length()
+   unique()
+   print()
+   seq()
+   setdiff()
+   sum(), mean(), sd(), quintile()
+   log() sqrt()
+   n()
+   c()
+   str()
+   cat()
+
+---
+# Strings and factors
+Strings
+   You can create strings with either single quotes or double quotes
+   Multiple strings are often stored in a character vector, which you can create with c()
+   
+   nchar()
+   substr()
+   In R, factors are used to work with categorical variables, variables that have a fixed and known set of possible values. They are also useful when you want to display character vectors in a non-alphabetical order.
+   y1 &lt;- factor(x1, levels = month_levels)
+   If you omit the levels, they’ll be taken from the data in alphabetical order:
+     f1 &lt;- factor(x1, levels = unique(x1))
+   If you ever need to access the set of valid levels directly, you can do so with levels():
+
+---
+# If else (conditionals)
+     cat()
+   
+   if (this) {
+     # do that
+   } else if (that) {
+     # do something else
+   } else {
+     # 
+   }
+   
+   cut(). It’s used to discretise continuous variables.
+   
+   x &lt;- if (y &lt; 20) "Too low" else "Too high"
+   
+---
+# More advice on naming (by Hadley)
+ The names of the arguments are also important. R doesn’t care, but the readers of your code (including future-you!) will. Generally you should prefer longer, more descriptive names, but there are a handful of very common, very short names. It’s worth memorising these:
+     
+     x, y, z: vectors.
+   w: a vector of weights.
+   df: a data frame.
+   i, j: numeric indices (typically rows and columns).
+   n: length, or number of rows.
+   p: number of columns.
+   Otherwise, consider matching names of arguments in existing R functions. For example, use na.rm to determine if missing values should be removed.
+
+# matrixes and subsetting
+ subsetting:
+     by position, by negative position, with a logical vector, names of a named vecor, you can also leave blank
+   
+---
+# Read data
+library(haven)
+df&lt;-read_sav("./data/vici 200109 dataset R-course.sav")
+head(df)
+df1&lt;-as.data.frame(df)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="libs/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>R for Data Analysis: A Short Tutorial</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dimiter Toshkov" />
+    <link href="libs/remark-css/metropolis-fonts.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: top, left, inverse, title-slide
+
+# R for Data Analysis: A Short Tutorial
+## Session 1: Introduction to R
+### Dimiter Toshkov
+### Institute of Public Administration, Leiden University
+### last updated: 2020-01-30
+
+---
+
+
+
+# What do you need to know about me?
+--
+My name is written *Димитър* and is pronounced *[diˈ mitər]*.
+
+--
+I am *not* a programmer.
+
+--
+I have done a fair bit of data analysis and some programming.
+
+--
+I like pictures.
+
+---
+class: center, inverse, top
+
+background-image: url("figs/mip_env_country.png")
+background-size: contain
+
+# Here is a picture that I like (done in R)
+
+---
+class: center, inverse, top
+
+background-image: url("http://dimiter.eu/thumb/DSC_3484.jpg")
+background-size: contain
+
+# This is not done in R (yes, there's [more](http://dimiter.eu/Photos.html))
+
+---
+# What is R?
+
+--
+## R is the best thing since sliced bread,
+
+--
+class: center
+
+&lt;img src="https://cran.r-project.org/Rlogo.svg" width="300"&gt;    &lt;img src="https://www.abelandcole.co.uk/media/3029_15898_z.jpg" width="300"&gt;
+
+--
+class: left
+
+## only much better, because...
+
+--
+.left[unlike bread, it combines *functional*  with *object-oriented* programming,]
+
+--
+.left[and it is not sliced, but modular, so that it can be easily extended with new packages.]
+
+---
+# Downsides of R
+
+--
+## It is called R.
+
+--
+## It regularly leads people into arguments about how good it is.
+
+
+---
+
+# What can you do with R?
+--
+## Run (m)any statistical models, including:
+- Bayseian models (e.g. with [STAN](https://mc-stan.org/users/interfaces/rstan))
+- Automated text analysis (e.g. with [quanteda](https://quanteda.io/)) and machine learning (e.g. with [tensorflow](https://cran.r-project.org/web/packages/tensorflow/index.html))
+
+--
+## Access data 
+- Directly from the web via APIs (e.g. [World Bank](https://cran.r-project.org/web/packages/wbstats/vignettes/Using_the_wbstats_package.html))
+- Scrape complex internet sites and databases (e.g. [EUR-Lex](https://eur-lex.europa.eu/))
+
+--
+## Do important things, such as
+- well-formatted conference programs from excel sheets
+- presentations like this one (with `RMarkdown` and [xaringan](https://cran.r-project.org/web/packages/xaringan/index.html))
+
+--
+## Do other nice things, such as
+- open reproducible science
+
+---
+# Art with R, by Katharina Brunner
+
+.center[![description of the image](figs/generativeart.png)]
+
+---
+# How can you learn to use R?
+--
+## 1. Get a good foundation.
+
+--
+## 2. Learn by doing,
+2.1 with lots of supprot form the R community on StackOverflow, blogs and Twitter,
+
+2.2 and adapting other people's code.
+
+--
+## 3. You can also get books.
+
+---
+# Recommended books
+
+&lt;img src="https://d33wubrfki0l68.cloudfront.net/b88ef926a004b0fce72b2526b0b5c4413666a4cb/24a30/cover.png" width="80"&gt; [R for Data Science](https://amzn.to/38NYJUr),  [link to a free version](https://r4ds.had.co.nz/)
+
+&lt;img src="https://images.tandf.co.uk/common/jackets/amazon/978081538/9780815384571.jpg" width="80"&gt; [Advanced R](https://amzn.to/2RDFBCM),  [link to a free version](http://adv-r.had.co.nz/)
+
+&lt;img src="https://images-na.ssl-images-amazon.com/images/I/41No%2BZCNEZL._SX379_BO1,204,203,200_.jpg" width="80"&gt; [R Cookbook](https://amzn.to/2RE5hPT), [link to a free version](http://www.cookbook-r.com/)
+
+&lt;img src="https://s.s-bol.com/imgbase0/imagebase3/large/FC/3/2/3/8/1001004011728323.jpg" width="80"&gt; [The R Book](https://amzn.to/2GxmDrh), [link to a free version](https://www.cs.upc.edu/~robert/teaching/estadistica/TheRBook.pdf)
+---
+# Additional resources
+[An introduction to R by the R Core Team (pdf)](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf)
+
+[R Studio Primers](https://rstudio.cloud/learn/primers)
+
+[A very short intro to some of R's programming features](https://www.johndcook.com/blog/r_language_for_programmers/)
+
+[A free introductory online course at DataCamp](https://www.datacamp.com/courses/free-introduction-to-r)
+
+[An intermediate course at DataCamp](https://www.datacamp.com/courses/intermediate-r)
+
+---
+# What can you expect from this tutorial?
+
+--
+## Get started.
+
+--
+## Get a good foundation, hopefully.
+
+--
+## Learn enough so you can continue learning on your own.
+
+--
+## If you want something else, let me know.
+
+---
+# Organization of the meetings
+
+## Session 1: Introduction to R
+- Workflow
+- Fundamentals; objects and functions
+
+## Session 2: Data wrangling
+- Importing data
+- Restructuring datasets
+- Recoding variables
+- Merging and exporting data
+
+## Session 3: Data analysis
+- Data summary and simple linear models
+- Generalized linear models
+- Multi-level models
+- Data reduction: PCA and factor models
+
+## Session 4: Data visualization
+- with `plot`
+- with `ggplot2`
+
+---
+# By the end of the tutorial...
+
+## You should not think about working with any other software for your data work&lt;sup&gt;1&lt;/sup&gt;.
+
+
+.footnote[
+  [1] Unless you have to work with the uninitiated.
+    ]    
+  
+---
+# Let's get started
+--
+We can work with R directly (from the console), but it would be nice if we could save our work somehow.
+
+--
+We can use any text editor and *copy and paste* the code, but this gets boring pretty quickly.
+
+--
+So we use programs such as **R Studio** that integrate a text editor linked to **R** and some other nice features.
+We send commands we write in the text file using `Cntr+ENTER` to be exectued in the console.
+
+--
+*Protip 1*: Use an **R Studio** theme that highlights code (I use *modern*).
+
+*Protip 2*: **R Studio** has useful shortcuts (see them all with `Alt+Shift+K`). Learn and use some of them (e.g. `Cntr+1`/`Cntr+2`). 
+
+---
+# Files and projects
+We can start a file, write code, execute the code, and, when we are happy, we can save the file (with a `.r` extension, but it remains a text file). 
+
+--
+This might be all we need for very small, simple and individual projects. (Btw, where is our work?)
+
+
+```r
+### Where are we?
+getwd() #oh, here
+setwd('C:/here') #better here
+```
+
+--
+But for more complex projects, you would want to start a *Project*. A project sets up the *working environment* and organizes things in a nice way. Within the project, you can (should) create separate folders for your code, input data, output data, plots, model results, and tables. The code itself can (should) be separated in smaller files (e.g. one for the libraries and functions that you use, one for data import and manipulation, one for statistical analyses, etc.). 
+
+--
+Use relative, not absolute paths in your scripts to make collaborative work easier.
+
+```r
+### There are good and bad paths
+'./data/nl/zh/dh/students.csv' #this is a good path
+'C:/data/nl/zh/dh/students.csv' #this is a bad path
+```
+
+--
+Some addditional advice on setting up projects is available [here](https://martinctc.github.io/blog/rstudio-projects-and-working-directories-a-beginner's-guide/) and [here](https://chrisvoncsefalvay.com/2018/08/09/structuring-r-projects/).
+We will say more about workflow (with `GitHub` and `RMarkdown`) later in this tutorial. 
+
+---
+# Some good practices
+--
+Take the time to annotate your code (using `#` to start a segment of a line that is not executed as code).
+
+--
+Think about the names of files and variables that you use. Have a system and be consistent. You can use `.`, or `_`, or capital letters, but stick to one.
+
+
+```r
+### How (not) to name your variables
+data.nl.denhaag.bezuidenhout #this is fine
+data_nl_denhaag_bezuidenhout #this is also fine
+DataNlDenhaagBezuidenhout #this is not so fine
+data.Nl_DenHaag_.bezuidenhout #this is definitely not fine
+```
+
+--
+Think about about how you name your scripts and other file names as well.
+
+*Protip 3*: Use `00_libraries.R`, `01_firstanalysis.R`, etc. to name your scripts in the order that they should be executed, so you can quickly sort them within the folder alphabetically.  
+
+---
+# Modularity
+
+R works with packages. 
+
+The default installation comes with basic functionality.
+
+For everything else, you install a package. 
+
+There are multiple packages that can achieve the same task.
+
+There is a special package called `tidyverse`, which together with some other associated packages developed by Hadley Wickham and company creates a convenient way to wrangle data. We will use these a lot.
+
+---
+# Working with packages
+
+Working with packages is easy:
+- first you have to install, from a **CRAN** repository, or from zip files, or via `devtools`. You can install with a command or from the **R Studio** menu. You install once on a computer (you migth need to update every now and then).
+
+- once the package is installed, you will want to load it with the `library()` function
+
+- you can also directly specify functions from packages for use, e.g. `dplyr::recode()`.
+
+
+```r
+### How to install and load a package
+install.packages('dplyr')
+library (dplyr)
+```
+
+--
+*Protip 4*: If you work with people who would not know how to install a package but would want to run your code, you can start your code with a function that will install and load packages automatically (see [here](https://stackoverflow.com/questions/4090169/elegant-way-to-check-for-missing-packages-and-install-them))
+
+*Protip 4a*: Don't do that with people who know their way around R. They don't like your script installing staff without their authorization.
+
+---
+# Assignment operators
+
+Perhaps the most fundamental operation in R is to assign a value to a named object: `object_name &lt;- value`. Be careful, R is sensitive; *case sensitive*, that is. 
+
+You can be old school&lt;sup&gt;1&lt;/sup&gt; and assign values to names with `&lt;-`. Or you can just use `=`. And if you are that cool, you can also use `-&gt;`.
+
+
+```r
+### There are different ways to assign
+best.month &lt;- 'August'
+best.date = 18
+1978 -&gt; best.year
+
+best.date
+```
+
+```
+## [1] 18
+```
+
+```r
+best.month
+```
+
+```
+## [1] "August"
+```
+
+```r
+best.year
+```
+
+```
+## [1] 1978
+```
+
+There are some subtle differences, if you are interested read [here](https://stackoverflow.com/questions/1741820/what-are-the-differences-between-and-assignment-operators-in-r).
+
+You also have the assignment operator `&lt;&lt;-`. This is most useful *'in conjunction with closures to maintain state'*. Exactly. If you want to know more, read [here](https://stackoverflow.com/questions/2628621/how-do-you-use-scoping-assignment-in-r).
+
+
+.footnote[
+  [1] "There is a general preference among the R community for using `&lt;-` for assignment (other than in function signatures) for compatibility with (very) old versions of S-Plus."]
+
+---
+# Vectors
+Vectors are one-dimensional collections of objects. 
+
+
+```r
+### How to make and check a vector
+v1&lt;-seq(1,50, by=5)
+v1
+```
+
+```
+##  [1]  1  6 11 16 21 26 31 36 41 46
+```
+
+```r
+v2&lt;-c('R','pie',5,NA)
+v2
+```
+
+```
+## [1] "R"   "pie" "5"   NA
+```
+
+```r
+is.vector(v1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.vector(v2)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.vector(c(is.vector(v1), is.vector(v2)))
+```
+
+```
+## [1] TRUE
+```
+
+There are several different types of vectors: *logical*, *character*, *numeric* (which can be *double* or *integer*), *complex* and *raw*. *Factors* and *dates* are augmented vectors that have a special attribute, their *'class'*.  
+
+
+```r
+### What vectors?
+typeof(v1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+typeof(v2)
+```
+
+```
+## [1] "character"
+```
+
+```r
+typeof(is.vector(c(is.vector(v1), is.vector(v2))))
+```
+
+```
+## [1] "logical"
+```
+
+```r
+typeof(c("1","2","4"))
+```
+
+```
+## [1] "character"
+```
+
+
+---
+# More on vectors
+
+*Protip 5*: In R, numbers are doubles by default. To make an integer, place an `L` after the number (e.g.`2L`). This can save some trouble down the road. Alternatively, use `round()` when evaluating.
+
+```r
+### Floating point bizzaro
+0.3/3 == 0.1
+```
+
+```
+## [1] FALSE
+```
+
+```r
+round(0.3/3,1) == 0.1
+```
+
+```
+## [1] TRUE
+```
+
+```r
+unique(c(.3, .4 - .1, .5 - .2, .6 - .3, .7 - .4))
+```
+
+```
+## [1] 0.3 0.3 0.3
+```
+Integers have one special value: `NA`, while doubles have four: `NA`, `NaN`, `Inf` and `-Inf`. 
+
+```r
+c(-1, 0, 1) / 0     
+```
+
+```
+## [1] -Inf  NaN  Inf
+```
+
+---
+# Coercion
+Use can coerce one type of vector to another. But be gentle and beware the consequences.
+
+
+```r
+v1&lt;-c(1,2,4)
+typeof(v1)
+```
+
+```
+## [1] "double"
+```
+
+```r
+f1&lt;-as.factor(v1)
+f1
+```
+
+```
+## [1] 1 2 4
+## Levels: 1 2 4
+```
+
+```r
+n1&lt;-as.numeric(f1)
+is.numeric(n1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+n1 #OMG!!!
+```
+
+```
+## [1] 1 2 3
+```
+
+```r
+n2&lt;-as.numeric(as.character(f1))
+n2 #that's better!
+```
+
+```
+## [1] 1 2 4
+```
+
+Coercion happens without your help (and perhaps realisation) as well, everytime you mix vector elements of different types together. The most complex type prevails.
+
+```r
+v1&lt;-seq(1:999)
+is.numeric(v1)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+length(v1) #vectors have length
+```
+
+```
+## [1] 999
+```
+
+```r
+v2&lt;-c(v1, '1000')
+is.numeric(v2)
+```
+
+```
+## [1] FALSE
+```
+
+```r
+typeof(v2) #it only takes one
+```
+
+```
+## [1] "character"
+```
+
+Character vectors are the most complex type of atomic vector, because each element of a character vector is a string, and a string can contain an arbitrary amount of data.
+  
+---
+# Lists 
+Lists, also called recursive vectors, can contain all kinds of things, including other lists.
+
+`y &lt;- list("a", 1L, 1.5, TRUE)`
+
+Data frame are lists of a special class
+`typeof(data.frame(NA))`
+`class(data.frame(NA))`
+
+---
+# Navigating out objects
+There are different ways in which we can navigate to and access elements of our objects.
+
+--
+We can do that by position or name:
+
+```r
+x &lt;- rnorm(100,0,1) #let's generate some randomness 
+y &lt;- rnorm(100,0,1) #let's generate more randomness 
+m&lt;-cbind(x,y) #let's bind randomness together in a ....
+class(m)
+```
+
+```
+## [1] "matrix"
+```
+
+```r
+dim(m)
+```
+
+```
+## [1] 100   2
+```
+
+```r
+length(x)
+```
+
+```
+## [1] 100
+```
+
+```r
+df&lt;-data.frame(m)
+
+### Navigation
+x[1]
+```
+
+```
+## [1] 0.9636579
+```
+
+```r
+m[1,1]
+```
+
+```
+##         x 
+## 0.9636579
+```
+
+```r
+m[1:5, -2]
+```
+
+```
+## [1]  0.9636579 -0.7231588 -1.1269112  0.2051638 -0.2215915
+```
+
+```r
+df[seq(1,100,10), "y"]
+```
+
+```
+##  [1]  2.11659144  0.86873300 -0.68278174  0.45131985 -0.67874403  0.24743575
+##  [7]  0.30916395  0.83387780 -0.53851646  0.01742019
+```
+--
+Navigating lists is more complicated.
+
+---
+# Some basic functions for summarizing data
+First steps are easy
+
+```r
+mean(x)
+```
+
+```
+## [1] -0.004506421
+```
+
+```r
+sd(y)
+```
+
+```
+## [1] 1.007197
+```
+
+```r
+quantile(m)
+```
+
+```
+##         0%        25%        50%        75%       100% 
+## -2.6338304 -0.6203573  0.0129913  0.5565599  2.9082438
+```
+
+```r
+summary(df)
+```
+
+```
+##        x                   y           
+##  Min.   :-2.633830   Min.   :-2.37031  
+##  1st Qu.:-0.628159   1st Qu.:-0.62036  
+##  Median :-0.012974   Median : 0.02792  
+##  Mean   :-0.004506   Mean   :-0.01797  
+##  3rd Qu.: 0.718150   3rd Qu.: 0.50958  
+##  Max.   : 2.186163   Max.   : 2.90824
+```
+
+But it can get more tricky
+
+```r
+df&lt;-rbind(df, c(NA,NA))
+tail(df)
+```
+
+```
+##               x          y
+## 96   0.73766508 -0.6013164
+## 97   0.01190240  0.6132521
+## 98   0.99009557  0.2339371
+## 99  -0.07326667  1.1716568
+## 100  0.60144207 -1.8642781
+## 101          NA         NA
+```
+
+```r
+sum(df$x)
+```
+
+```
+## [1] NA
+```
+
+```r
+sum(df$x, na.rm=TRUE)
+```
+
+```
+## [1] -0.4506421
+```
+
+And more tricky
+
+```r
+sum(df)
+```
+
+```
+## [1] NA
+```
+
+```r
+df$z &lt;- rowSums(df)
+tail(df)
+```
+
+```
+##               x          y          z
+## 96   0.73766508 -0.6013164  0.1363487
+## 97   0.01190240  0.6132521  0.6251545
+## 98   0.99009557  0.2339371  1.2240327
+## 99  -0.07326667  1.1716568  1.0983901
+## 100  0.60144207 -1.8642781 -1.2628361
+## 101          NA         NA         NA
+```
+
+```r
+df$z &lt;- rowSums(df, na.rm=TRUE)
+tail(df)
+```
+
+```
+##               x          y          z
+## 96   0.73766508 -0.6013164  0.2726973
+## 97   0.01190240  0.6132521  1.2503091
+## 98   0.99009557  0.2339371  2.4480653
+## 99  -0.07326667  1.1716568  2.1967803
+## 100  0.60144207 -1.8642781 -2.5256721
+## 101          NA         NA  0.0000000
+```
+
+---
+# LOOPS
+Loops are a fundamental programming technique, in which we iterate over a predefined sequence and apply a function to each element.
+
+
+```r
+for ( i in 1:5){
+   print(round(df[i,],2))
+}
+```
+
+```
+##      x    y    z
+## 1 0.96 2.12 6.16
+##       x     y     z
+## 2 -0.72 -0.56 -2.56
+##       x    y     z
+## 3 -1.13 0.52 -1.22
+##      x     y     z
+## 4 0.21 -0.53 -0.65
+##       x    y    z
+## 5 -0.22 0.33 0.21
+```
+
+We can also create new objects in loops:
+
+
+```r
+for ( i in 1:dim(df)[1]){
+    df$our.sum[i]&lt;-sum(df[i,1:2], na.rm=TRUE)
+}
+df[c(1,100:101),]
+```
+
+```
+##             x         y         z   our.sum
+## 1   0.9636579  2.116591  6.160499  3.080249
+## 100 0.6014421 -1.864278 -2.525672 -1.262836
+## 101        NA        NA  0.000000  0.000000
+```
+You can read more about loops [here](https://www.datacamp.com/community/tutorials/tutorial-on-loops-in-r).
+
+---
+# Comparisons (evaluation)
+Evaluation functions: `&gt;`, `&gt;=`, `&lt;`, `&lt;=`, `!=` (not equal), and `==` (equal).
+
+Logical operators to mix thing up a bit: `&amp;` is “and”, `|` is “or”, and `!` is “not”. 
+   
+Be careful with missing values:  almost any operation involving an unknown value will also be unknown.
+
+We can check for missing data: `is.na(x)` or even better `which(is.na(df$x))`
+
+
+```r
+which(df$x&gt;1)
+```
+
+```
+##  [1]  7 18 22 25 26 33 38 39 44 45 64 78 90 93 94
+```
+
+```r
+w1&lt;-which(df$x&gt;1)
+length(w1)
+```
+
+```
+## [1] 15
+```
+
+```r
+w2&lt;-which(df$y&gt;1)
+length(w2)
+```
+
+```
+## [1] 14
+```
+
+Check whether the last row of `df` has elements greater than 1.
+
+---
+# Conditionals
+Conditional evaluation is another fundamental programming technique. 
+
+
+```r
+  if (this) {
+     # do that
+   } else if (that) {
+     # do something else
+   } else {
+     # 
+   }
+```
+
+For very short evaluations we can also use the one-liner `ifelse`: `ifelse(evaluate, do.this.if.true, do.this.if.false)`. These simple statements can be nested, but it is better to use the extensive form shown above.
+
+
+```r
+for (i in 1:length(df$x)){
+   if (is.na(df$x[i])==FALSE &amp; is.na(df$y[i])==FALSE) {
+      df$out.sum2[i] &lt;- sum(df[i,1:2])
+   } else {
+       df$out.sum2[i] &lt;- NA
+   }
+}
+```
+
+---
+# Functions
+Objects are staff with names and values. Functions do things to objecs.
+
+In R you can easily write your own functions. Just give them a name and tell them what to do
+
+
+```r
+sum.na&lt;-function (x) {sum(x, na.rm=T)} #sum that avoids NAs 
+sum.na(c(3,5,NA))
+```
+
+```
+## [1] 8
+```
+
+```r
+sum.allna &lt;- function (x) {if (all(is.na(x))) NA else sum(x,na.rm=T)} #sum that avoids NAs but returns NA if all NAs
+sum.allna(c(NA,NA))
+```
+
+```
+## [1] NA
+```
+You can read more about functions [here](https://www.datacamp.com/community/tutorials/functions-in-r-a-tutorial).
+---
+# Strings and factors
+
+## Strings
+
+You can create strings with either single quotes or double quotes.
+Multiple strings are often stored in a character vector, which you can create with `c()`. These are two useful functions for working with strings: `nchar()`, `substr()`.
+
+In R, factors are used to work with categorical variables, variables that have a fixed and known set of possible values. They are also useful when you want to display character vectors in a non-alphabetical order. If you ever need to access the set of valid levels directly, you can do so with `levels()`. You can read more about factors [here](https://www.datacamp.com/community/tutorials/intro-r-finance-factors).
+   
+---
+# OK. Let's get some real data!
+
+
+```r
+library(haven)
+df&lt;-read_sav("./data/vici 200109 dataset R-course.sav") #adapt the path to the file if needed 
+head(df) #this is a tibble, a type of data frame
+df1&lt;-as.data.frame(df) #let's make it a simple data frame for now
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="libs/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
