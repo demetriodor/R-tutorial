@@ -1,0 +1,599 @@
+---
+title: "R for Data Analysis: A Short  Tutorial"
+subtitle: "Session 3: Modelling data"
+author: "Dimiter Toshkov"
+institute: "Institute of Public Administration, Leiden University"
+date: "last updated: `r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    self_contained: yes
+    css: [default, metropolis, metropolis-fonts, scrolling.css]
+    lib_dir: libs
+    chakra: libs/remark-latest.min.js
+    nature:
+      titleSlideClass: [top, left, inverse]
+      highlightStyle: github
+      highlightLines: true
+      ratio: "16:9"
+      countIncrementalSlides: false
+
+---
+# Last session...
+
+```{r xaringanExtra-search, echo=FALSE}
+xaringanExtra::use_search(show_icon = TRUE)
+```
+
+```{r xaringan-extra-styles, echo=FALSE}
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         #<<
+  mute_unhighlighted_code = TRUE  #<<
+)
+```
+
+```{r xaringanExtra, echo = FALSE}
+xaringanExtra::use_progress_bar(color = "white", location = "top")
+```
+
+```{r xaringan-panelset, echo=FALSE}
+xaringanExtra::use_panelset()
+```
+
+<style type="text/css">
+
+.title-slide {
+  background-image: url(https://cran.r-project.org/Rlogo.svg);
+  background-position: 50% 0%; ## just start changing this
+  background-size: 150px;
+  background-color: #fff;
+  padding-left: 100px;  /* delete this for 4:3 aspect ratio */
+}
+
+.remark-slide-content {
+    font-size: 28px;
+    padding: 1em 1em 1em 1em;
+}
+
+.remark-slide-content > h1 {
+  font-size: 32px;
+  margin-top: -85px;
+}
+
+</style>
+
+--
+
+`r icons::fontawesome("check-double")` We learned how to import and export different types of data.
+
+--
+
+`r icons::fontawesome("check-double")` We learned how to wrangle data, including how to subset, create new variables, recode existing variables, rename, sort, filter, merge, pivot and more.
+
+--
+
+`r icons::fontawesome("forward")` Today we are ready to analyze data and estimate statistical models!
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(fig.retina = 3, warning = FALSE, message = FALSE)
+```
+---
+# Ready for some modelling?
+
+.center[![trachoma](figs/zoolander2.jpg)]
+
+---
+# Let's load some data!
+
+```{r eval=TRUE, collapse=TRUE, tidy=TRUE}
+library(tidyverse)
+library(haven)
+dt <- read_sav("./data/ESS11.sav") 
+head(dt)
+```
+
+---
+# Plotting distributions (1)
+`r icons::fontawesome("chart-bar")` Before we decide on a statistical model, we want to inspect the distribution of the variables, for example by looking at histograms:
+
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+#plot first variable
+hist(dt$trstep, 
+     col=rgb(0,0,1,0.25), 
+     breaks=10,
+     xlab='Trust in the European Parliament (blue)\n
+     and in national parliaments (red)',
+     main=''
+) 
+#add second variable
+hist(dt$trstprl, 
+     col=rgb(1,0,0,0.25), 
+     breaks=10,
+     add=T) 
+```
+]
+
+.pull-right[
+```{r eval=TRUE, echo=FALSE}
+hist(dt$trstep, 
+     col=rgb(0,0,1,0.25), # semi-transparent colors
+     breaks=10,
+     xlab='Trust in the European Parliament (blue)\nand in national parliaments (red)',
+     main='')
+
+hist(dt$trstprl, 
+     col=rgb(1,0,0,0.25), 
+     breaks=10,
+     add=T) 
+```
+]
+
+---
+# Plotting distributions (2) 
+`r icons::fontawesome("chart-area")` Histograms show frequencies. If we want to see relative proportions, we switch to densities 
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+# plot first variable
+plot(density(
+  dt$agea[dt$gndr == 1], na.rm=TRUE), 
+  col=rgb(0, 0, 1, 0.75), # semi-transparent colors
+  xlab = 'Age (in years)',
+  main = "") 
+# add second
+lines(density(
+  dt$agea[dt$gndr == 2], na.rm=TRUE), 
+   col = rgb(1, 0, 0, 0.75)
+  ) 
+```
+]
+.pull-right[
+```{r eval=TRUE, echo=FALSE}
+#first variable
+plot(density(
+  dt$agea[dt$gndr==1], na.rm=TRUE), 
+  col=rgb(0,0,1,0.75),
+  xlab='Age (in years)',
+  main="")  
+#add second
+lines(density(
+  dt$agea[dt$gndr==2], na.rm=TRUE), 
+   col=rgb(1,0,0,0.75)
+  ) 
+```
+]
+
+---
+# Cross-tabulations
+`r icons::fontawesome("table")` Cross-tabs are a common first step to examine associations between (categorical) variables.
+```{r eval=TRUE, collapse=TRUE}
+dt$voted.dummy = ifelse(dt$vote == 1, 1, 0)
+dt$sex = ifelse (dt$gndr == 1, 'male', 'female')
+table (dt$voted.dummy, dt$sex) # frequencies
+table (dt$voted.dummy, dt$sex) %>% # percentages
+  prop.table(2) %>% round(2)
+```
+
+---
+# Tables of descriptive stats
+`r icons::fontawesome("table")` Often, before we report any results from statistical models, we want to present a descriptive summary of the variables used. We already know the `summary()` function, which we can use to do exactly that, but its output is not very easy to insert into a text file. 
+The `modelsummary` package has some great functions that produce tables we can easily insert in `MSWord` and other types of files. For details, see [here](https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html). Another great package for tables of descriptives is `gtsummary`.
+
+---
+# Table of descriptive stats: tbl_summary()
+
+```{r eval=TRUE, collapse=TRUE}
+library(gtsummary)
+dt %>% dplyr::select(stfdem, lrscale, netustm, sex) %>% tbl_summary(by='sex')
+```
+
+---
+# Table of descriptive stats: datasummary_skim()
+```{r eval=FALSE, collapse=TRUE}
+library(modelsummary)
+dt.s<-data.frame(select(dt, lrscale, trstun, trstep, trstprl))
+datasummary_skim(dt.s, output = 'markdown')
+# change the type of output to suit your desired destination
+```
+
+---
+# Summarize per group
+But cross-tabs aren't so great when we want to summarize a continuous variable per group. Then, we can then use `summarize()`. There are [alternatives](https://stackoverflow.com/questions/9847054/how-to-get-summary-statistics-by-group) as well.
+```{r eval=TRUE, collapse=TRUE}
+dt %>% 
+  group_by(sex) %>% 
+  summarize(mean = mean(trstun, na.rm=TRUE),
+            sd = sd(trstun, na.rm=TRUE),
+            min = min(trstun, na.rm=TRUE),
+            max = max(trstun, na.rm=TRUE))
+```
+
+---
+# OK, OK, let's do a **t-test**
+
+Two-sample t-test of *Trust in UN* per *Gender*:
+```{r eval=TRUE, collapse=TRUE}
+t.test(
+  dt$trstun[dt$gndr == 1], 
+  dt$trstun[dt$gndr == 2])
+```
+
+---
+# Yes, we can also do chi-squared tests
+Chi-squared (χ2) tests are appropriate when we want to examine associations between categorical (factor) variables and for contingency tables.
+
+Voting per gender:
+```{r eval=TRUE, collapse=TRUE}
+chisq.test(factor(dt$gndr), factor(dt$vote))
+```
+
+---
+# Correlations, correlations
+We compute simple bivariate correlations with `cor(x,y, use='complete')`. But the `corrplot` package provides for nice correlation plots: [details](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html). 
+
+.panelset[
+.panel[.panel-name[Corrplot code]
+
+```{r eval=FALSE, collapse=TRUE}
+# first, subset to drop missing data
+dt.com <- dt %>% 
+  select(lrscale, trstep, trstun, trstprl, stfdem,  stflife) %>% 
+  drop_na()
+
+# then, run corrplot
+library(corrplot)
+corrplot.mixed(cor(dt.com), lower.col = "black", number.cex = .7)
+```
+]
+.panel[.panel-name[Resulting plot]
+```{r eval=TRUE, echo=FALSE}
+# first, subset to remove missings
+dt.com <- dt %>% 
+  select(lrscale, trstep, trstun, trstprl, stfdem, stflife) %>% 
+  drop_na()
+
+# then, run corrplot
+library(corrplot)
+corrplot.mixed(cor(dt.com), lower.col = "black", number.cex = .7)
+```
+
+]
+]
+
+---
+# Good old OLS: Linear regression
+Naturally, our first stat model should be the workhorse of data analysis, linear regression. Note that we assign the output to a named object and then use `summary()` on the object to get an overview of the results (scroll down the slide to see all results) 
+
+```{r eval=TRUE}
+model.lm.1 <- lm(stfdem ~ lrscale + trstprl + factor(sex) + netustm + etfruit + cntry, 
+               weights=pspwght,
+               data=dt)
+summary(model.lm.1)
+```
+
+
+---
+# Running statistical models in R (1)
+There is a common template behind the different stat models. We put the outcome variable on the left side, then we put tilde (`~`), then we put the predictors separated by `+`. After we are done, we put a comma (` ,`) and specify the `data` argument, and other optional arguments such as `weights` or distribution family. An intercept is usually included by default. We can include interactions with `*`. 
+
+We can store the result of the estimation in a (named) object, which would be of type `list`. Then we can call functions, such as `print()`, `summary()` and `plot()` on this object. 
+---
+# Running statistical models in R (2)
+We can also access particular elements of this list. For example, for `lm` models, `model.lm.1[[1]]` will give the estimated coefficients, as well `model.lm.1$coef`. 
+
+`r icons::fontawesome("hat-wizard")` **Protip:** The summary of the object is also an object. For example, you can access the standard errors with `summary(model.lm.1)$coefficients[ , 'Std. Error']` and p-values with `summary(model.lm.1)$coefficients[ , 4]` 
+
+We can access the residuals with `model.lm.1$residuals` and predicted values with `predict(model.lm.1)` (we can also supply new values for the predictors for which to compute predictions).
+
+---
+# Diagnostics
+.pull-left[
+If you are into these things, you can get some pre-fabricated diagnostics for your linear models with `plot(model.lm.1)` or with the package `gglm` and `gglm()`.]
+
+.pull-right[
+```{r eval=TRUE, echo=FALSE}
+par(mfrow=c(2,2))
+plot(model.lm.1)
+```
+]
+
+---
+# What if you care about being robust?
+
+You can make your linear regression provide robust or clustered standard errors. This used to be a hassle, and a major reason for people to stick to other proprietary data-analytic software. But not anymore. Use the `fixest` [package](https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html) . The syntax is very similar to `lm`. But we specify fixed effects slightly differently by using the `|` symbol. 
+
+Alternatively, we can use the `lm_robust()` function from the `estimatr` [package](https://declaredesign.org/r/estimatr/reference/lm_robust.html). 
+
+Andrew Heiss has [a great overview](https://evalf21.classes.andrewheiss.com/example/standard-errors/) of the options.
+
+---
+# Robust errors in action
+An example of a linear regression with fixed effects at the country level and heteroskedastic robust standard errors with the `feols()` function from `fixest`. Using this model we make the amazing discovery that eating more fruit (`etfruit`) decreases *significantly* satisfaction with democracy! **(Scroll down the slide for full results.)**
+
+```{r eval=TRUE, collapse=TRUE}
+library(fixest)
+model.lm.1.robust<-feols(stfdem ~ lrscale + trstprl + factor(sex) + 
+                           netustm + etfruit | cntry, # fixed effects per country
+                         vcov = "hetero", # heteroskedastic robust SEs
+                         data = dt)
+summary(model.lm.1.robust)
+```
+
+---
+# Generalized linear models
+The `glm()` function has you covered for various types of models: 
+- logistic (`glm ( y ~ x, family = 'binomial')`) for binary data, 
+- Poisson (`glm ( y ~ x, family = 'poisson')`) for count data, 
+- negative binomial for overdispersed count data (`glm( y ~ x, family = 'quasipoisson')`), and more. 
+
+---
+# Logistic regression results
+Let's see the `glm()` function in action performing a simple logistic regression:
+
+```{r eval=TRUE, collapse=TRUE}
+model.glm.1<-glm(voted.dummy ~ stfdem + sex + lrscale + trstprl, 
+                 data = dt, family = 'binomial')
+exp(model.glm.1$coefficients) # to exponentiate the coefficients
+summary(model.glm.1)
+```
+
+---
+# Models with interactions (1)
+
+`r icons::fontawesome("connectdevelop")` There are several different ways to add interactions to our models. 
+First, we can specify *partial* marginal effects with the `*` symbol. 
+
+```{r echo=TRUE, results='hide', collapse=TRUE}
+summary(model.lm.3 <- lm(stfdem ~ factor(sex) * lrscale, data = dt))
+```
+This is the same as the more verbose syntax using `:`.
+```{r echo=TRUE, results='hide', collapse=TRUE}
+summary(model.lm.4 <- lm(stfdem ~ factor(sex) + lrscale + factor(sex):lrscale, 
+                         data = dt))
+```
+
+But to get *full* marginal effects, use the `f1 / f2` interaction syntax: 
+```{r echo=TRUE, results='hide', collapse=TRUE}
+summary(model.lm.5 <- lm(stfdem ~ factor(sex) / lrscale, data = dt))
+```
+
+---
+# Models with interactions (2)
+`r icons::fontawesome("connectdevelop")` The models are equivalent, but in the third case we do not have to compute ourselves the effect of *Left/Right* for different values of *Gender*, and we get the correct standard errors and p-values computed for us directly for every stratum of *Gender*. This also makes it easier to plot meaningful marginal effects.
+
+In terms of syntax, `f1 / x2` is equivalent to `f1 + f1:x2`, while `f1 * x2` is equivalent to `f1 + x2 + f1:x2`. So `f1 / x2` drops the parent effect of `x2` from the formula.
+
+For details and extensions, see [this post](https://grantmcdermott.com/posts/interaction-effects/) by Grant McDermott. The general issue has to do with the difference between crossed and nested interactions (see  [here](https://stackoverflow.com/questions/32616762/defining-an-infix-operator-for-use-within-a-formula/32682826#32682826)).
+
+---
+# Tables of model results (1)
+`r icons::fontawesome("table")` The `summary()` function prints tables of results in the console. To export model results outside `R`, we can use several different packages. It is straightforward to export directly into `latex`, `markdown` and `html` formats. There is also a way to get the regression tables output into everyone's favorite word processor, **MSWord**. With [`modelsummary`](https://modelsummary.com/vignettes/modelsummary.html) or with [`gtsummary`](https://www.danieldsjoberg.com/gtsummary/index.html), we can directly make a `docx` file. There is an alternative that is just a little bit more circumvent: 
+- first, we (install and) load the [`stargazer`]((https://cran.r-project.org/web/packages/stargazer/vignettes/stargazer.pdf)) package (or `modelsummary` or `gtsummary`)
+- second, we generate a table of results as a small `html` file 
+- third, we locate the html file and open it in any browser
+- fourth, we copy and paste the html table into MSWord 
+- fifth, we are done after some optional tinkering with the formatting
+
+`r icons::fontawesome("hat-wizard")` **Protip:** Careful not to mix up the variable names (export first without specifying covariate labels).  
+
+---
+# Tables of model results (2)
+If convenience wasn't enough, these packages come with other perks, such as computing robust standard errors on the fly, or exponentiating coefficients from logistic regression models. Let's summarize the results of our model of voting behavior: 
+```{r eval=TRUE, collapse=TRUE}
+library(gtsummary)
+tbl_regression(model.glm.1, exponentiate = TRUE)
+```
+
+---
+# Let's see how to export regression tables with `stargazer`
+
+```{r eval=TRUE, collapse=TRUE}
+m1a<-lm(stfdem ~ lrscale + trstprl + etfruit, data=dt)
+m1b<-lm(stfdem ~ lrscale + trstprl + etfruit + sex, data=dt)
+m1c<-update (m1b, .~. + stflife)
+
+library(stargazer)
+stargazer(m1a, m1b, m1c, type="html", align=T, omit.stat=c("LL","ser","f"), 
+          no.space=T, title = 'Models of something very important',
+          dep.var.labels=c("Satisfaction wtih democracy"), 
+          covariate.labels=c("Left-Right","Trust (nat.)", "Eats fruit", 'Gender (male)', 'Life satisfaction'),
+          column.labels=c('Model 1.1','Model 1.2','Model 1.3'), 
+          digits=2, initial.zero =T, model.numbers=F, 
+          out="./models/model_set1_sg.html")
+```
+
+---
+# Now let's take `modelsummary` for a spin
+
+```{r eval=TRUE, collapse=TRUE}
+library(modelsummary)
+models1 = dvnames(list (m1a, m1b, m1c))
+modelsummary(models1,  fmt = 2, 
+             estimate = "{estimate} [{conf.low}, {conf.high}] p={p.value} {stars}",
+             statistic = NULL, 
+             title = '',
+             #coef_omit = ("cntry"),
+             gof_omit = 'DF|Deviance|AIC|BIC|RMSE',
+             output="./models/model_set1_ms.docx")
+```
+
+---
+# Mediation analysis
+
+We can use state-of-the-art causal mediation analysis with the `mediation` package: [details](https://cran.r-project.org/web/packages/mediation/vignettes/mediation.pdf).
+- first we specify a model of the response
+- then we specify a model of the mediator
+- then we let `mediate()` do its magic
+- and then we run sensitivity analyses
+
+For an interaction between treatment and mediator just add an interaction in the outcome model: to test the significance of the interaction, use `test.TMint(med.out, conf.level = .95)`. Use `medsens()` for sensitivity analysis.
+
+---
+# Mediation analysis in practice (1)
+Let's build a model of *Life satisfaction* as a function of *health status* as mediated by *frequency of doing sports*. Scroll down to see the results.
+
+```{r eval=TRUE, collapse=TRUE}
+library(mediation)
+dt$health <- 6-dt$health # invert the coding to correspond with the label
+dt.s <- dt %>% dplyr::select(health, agea, sex, dosprt, stflife) %>% na.omit()
+med.model <- lm(dosprt ~ health + agea + sex, data=dt.s) # model of mediator
+out.model <- lm(stflife ~ health + agea + sex + dosprt, data=dt.s) # model of outcome
+
+final.model <- mediate(med.model, out.model, treat = "health", 
+                       mediator = "dosprt", robustSE = TRUE, sims = 100) 
+summary(final.model)
+```
+---
+# Mediation analysis in practice (2)
+Plotting the results is easy:
+
+.pull-left[
+```{r eval=FALSE, results=FALSE, collapse=TRUE}
+plot(final.model, xlim=c(0,1),
+     main='Effect of Health on 
+     Life Satisfaction\nDirect and 
+     Mediated by Doing Sports')
+```
+]
+
+.pull-right[
+```{r eval=TRUE, echo=FALSE, collapse=TRUE}
+plot(final.model, xlim=c(0,1),
+     main='Effect of Health on Life Satisfaction\nDirect and Mediated by Doing Sports')
+```
+]
+---
+# More modelling?
+.center[![trachoma](figs/zoolander1.jpg)]
+
+---
+# Multilevel models
+`r icons::fontawesome("layer-group")` We can let our modeling span multiple levels with the `lme4` package. 
+
+```{r eval=TRUE, collapse=TRUE}
+library(lme4)
+library(arm)
+
+# varying intercept with individual level predictor
+ml0 <- lmer(stfdem ~ lrscale + (1 | cntry), data=dt)
+
+# varying intercept, varying slope
+ml1 <- lmer(stfdem ~ lrscale + (1 + lrscale | cntry), data=dt) 
+```
+
+---
+# America's next top (multilevel) model
+We can access the estimated coefficients, as well as the computed fixed effects and random effects. For mode details, see the excellent book by [Gelman and Hill (2007)](https://amzn.to/2Hgz5fA). For a great intuitive introduction to multilevel models, see this [site](http://mfviz.com/hierarchical-models/) by Michael Freeman.
+```{r eval=FALSE}
+summary(ml1)
+display(ml1)
+coef(ml1) # estimated coefficients
+fixef(ml1) # fixed effects
+ranef(ml1) # random effects
+```
+
+---
+# Understanding multilevel models
+To understand, illustrate and export results from multilevel models, use the `sjPlot` package and the `tab_model()` function in particular. For details, see [here](https://strengejacke.github.io/sjPlot/articles/tab_mixed.html).
+
+```{r eval=TRUE, collaps=TRUE}
+library(sjPlot)
+tab_model(ml1)
+```
+---
+# Analysis of randomized experiments (1)
+`r icons::fontawesome("random")` As you would expect, the analysis of experiments is very easy. You can of course use `lm()` to retrieve average treatment effects. If you want to run analysis of variance, the function `stats::anova()` in `base R` takes a fitted model object (so it takes the output of `lm()`, for example) with **Type I** sums of squares. 
+
+`r icons::fontawesome("hat-wizard")` **Protip:** Use the function `Anova()` from the package `car` when you need **Type II** or **Type III** sums of squares (this is [a short explanation](https://stackoverflow.com/questions/74713008/differences-between-anova-and-anova#:~:text=Summing%20up%3A,on%20the%20presence%20of%20interactions.) of when you would need that.)
+
+---
+# Analysis of randomized experiments (2)
+It gets a tad more complicated when we want to include covariates. The [recommended approach](https://alexandercoppock.com/Green-Lab-SOP/Green_Lab_SOP.html) is to specify a model wtih robust standard errors in which the treatment is interacted with the demeaned covariates. This leads to the so-called [*Lin regression*](http://web.archive.org/web/20150505184132/http://blogs.worldbank.org/impactevaluations/node/847.). You can implement this approach via the `estimatr` package and its function `lm_lin()`. Alternatively, use `lm_robust()`, but don't forget to demean the covariates. 
+
+```{r eval=FALSE, collaps=TRUE}
+library(estimatr)
+# Hypothetical experimental dataset `d`
+summary(em1a<-lm_lin(dv.index ~ condition, covariates = ~ age, data=d)) # apprach I
+
+d$age_demeaned = scale(d$age, scale=FALSE) # to demean (center) the covariate
+summary(em1b<-lm_robust(dv.index ~ condition * age_demeaned, data=d)) # approach II
+```
+
+---
+# Analysis of randomized experiments (3)
+Before analysis comes design. The [`DeclareDesign`](https://declaredesign.org/r/declaredesign/) package supports the design of complex experiments, including statistical power analyses, decisions about blocked randomization, spillover considerations, etc. It is a very powerful tool, but it is not very easy to master. Try it out the next time you plan your experiments.
+
+Conjoint experimental designs are all the rage these days. Personally, I am not a fan, but if you want to learn how to analyse data from conjoint experiments in R, follow [this tutorial in two parts](https://www.andrewheiss.com/blog/2023/08/12/conjoint-multilevel-multinomial-guide/) by Andrew Heiss.
+
+---
+# Structural Equations Models (SEM)
+`r icons::fontawesome("project-diagram")` There are (at least) two packages for doing SEM: `sem` and `lavaan`. More on the SEM package [here](https://socialsciences.mcmaster.ca/jfox/Misc/sem/SEM-paper.pdf).
+I recommend working with [`lavaan`](https://www.jstatsoft.org/article/view/v048i02).
+.pull-left[
+```{r eval=TRUE, collapse=TRUE, results=FALSE}
+library(lavaan)
+l.model <- '
+   # latent variables
+     lat1 =~ trstun + trstep + trstprl
+     lat2 =~ stfdem + lrscale
+   # regressions
+     lat2 ~ lat1
+   # residual covariances
+     lrscale ~~ trstun
+'
+```
+]
+.pull-right[
+```{r eval=TRUE, collapse=TRUE}
+l.fit <- lavaan::sem(l.model, data=dt)
+#summary(l.fit)
+parameterEstimates(l.fit)
+```
+]
+
+---
+# PCA and factor analysis
+R has extensive capabilities for factor analysis, PCA and other dimension-reduction techniques, such as item response models.
+```{r eval=FALSE}
+library(psych)
+# principal components analysis
+pca(dt.com) 
+
+# factor analysis
+model.fa1<-fa(dt.com, nfactors=2, rotate='varimax', scores='regression') 
+print(model.fa1)
+model.fa1$scores[1:5,]
+```
+`r icons::fontawesome("hat-wizard")` **Protip:** Use tetrachronic correlations for variables with few levels.
+
+---
+# Yet more models
+If what we reviewed above doesn't have you covered, consider:
+- models for categorical data (ordered and unordered) with the `MASS` package
+- event history models (survival analysis) with the `survival` package
+- instrumental variables and other econometric models with the `AER` package
+- generalized additive models with `gam`
+- survey design with the `survey` package
+
+---
+# Don't forget to save your work
+`r icons::fontawesome("save")` Save code you've written and wanna use in the future.
+`r icons::fontawesome("save")` Save data that you've created or modified.
+`r icons::fontawesome("save")` Save graphs, tables and model output.
+
+`r icons::fontawesome("sitemap")` Don't forget to keep files organized!
+
+---
+# How to get in touch?
+
+`r icons::fontawesome("envelope")` demetriodor@gmail.com
+
+`r icons::fontawesome("chrome")` [http://dimiter.eu](http://dimiter.eu)
+
+`r icons::academicons("conversation")` @dtoshkov.bsky.social
+
+`r icons::fontawesome$brands$twitter` @DToshkov
+
+`r icons::fontawesome("github")` [github.com/demetriodor](https://github.com/demetriodor/)
+
+`r icons::fontawesome("linkedin")` Dimiter Toshkov

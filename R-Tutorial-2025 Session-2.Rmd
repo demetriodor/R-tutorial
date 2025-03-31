@@ -1,0 +1,606 @@
+---
+title: "R for Data Analysis: A Short  Tutorial"
+subtitle: "Session 2: Data Wrangling"
+author: "Dimiter Toshkov"
+institute: "Institute of Public Administration, Leiden University"
+date: "last updated: `r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    self_contained: yes
+    css: [default, metropolis, metropolis-fonts, scrolling.css]
+    lib_dir: libs
+    chakra: libs/remark-latest.min.js
+    nature:
+      titleSlideClass: [top, left, inverse]
+      highlightStyle: github
+      highlightLines: true
+      ratio: "16:9"
+      countIncrementalSlides: false
+
+---
+<style type="text/css">
+
+.title-slide {
+  background-image: url(https://cran.r-project.org/Rlogo.svg);
+  background-position: 50% 0%; ## just start changing this
+  background-size: 150px;
+  background-color: #fff;
+  padding-left: 100px;  /* delete this for 4:3 aspect ratio */
+}
+
+.remark-slide-content {
+    font-size: 28px;
+    padding: 1em 1em 1em 1em;
+}
+
+.remark-slide-content > h1 {
+  font-size: 32px;
+  margin-top: -85px;
+}
+
+</style>
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(fig.retina = 3, warning = FALSE, message = FALSE)
+```
+
+# Last session...
+
+```{r xaringanExtra-search, echo=FALSE}
+xaringanExtra::use_search(show_icon = TRUE)
+```
+
+```{r xaringan-extra-styles, echo=FALSE}
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         #<<
+  mute_unhighlighted_code = TRUE  #<<
+)
+```
+
+```{r xaringanExtra, echo = FALSE}
+xaringanExtra::use_progress_bar(color = "white", location = "top")
+```
+
+```{r xaringan-panelset, echo=FALSE}
+xaringanExtra::use_panelset()
+```
+
+
+--
+
+`r icons::fontawesome("check-double")` We introduced R as a programming language.
+
+--
+
+`r icons::fontawesome("check-double")` We learned how to set up projects and reviewed some good practices for our workflow.
+
+--
+
+`r icons::fontawesome("check-double")` We learned about some of the fundamental features of R: data types (vectors, lists, etc.), assignment operators, indexing, evaluation, loops and functions.
+
+--
+
+`r icons::fontawesome("forward")` Today we get our hands dirty with wrangling some real data!  
+
+---
+class: center, inverse, top
+
+background-image: url("figs/bigstock-197264191-1.jpg")
+background-size: contain
+
+---
+# Importing data
+`r icons::fontawesome("database")` Let's get some data  from the European Social Survey! You will have to register and download the data file first.
+
+```{r eval=TRUE}
+library(haven)
+# adapt the path to the file if needed 
+df <- read_sav("./data/ESS11.sav") # this is a tibble, a fancy type of data frame
+
+dt <- as.data.frame(df) # we can make it a plain data frame
+```
+---
+# There are different ways of getting data into R (1)
+
+`r icons::fontawesome("file-import")` In `base R`, you can use `read.table('filename.txt', header = TRUE, sep = '\t', dec = ',', as.is = TRUE)` for comma-separated (`read.csv()`) or tab-separated 
+(`read.delim()`) data. A more general function is `scan()`, which you're unlikely to use for rectangular data files.
+
+`r icons::fontawesome("hat-wizard")` **Protip:**  If you encounter problems with encoding (quite likely, if you work with different languages), use the `guess_encoding()` function from the `readr` package and then set the `encoding` option of the data import function.
+
+---
+# There are different ways of getting data into R (2)
+
+`r icons::fontawesome("file-import")` For other file types, you have specialized packages:
+- for Excel files, you have `readxl`
+- for STATA, you have `foreign`, `haven` and `readstata13`
+- for SPSS, you have `haven` and `memisc`
+- for really big file, use `data.table::fread`
+- you can also use the package `rio` that chooses the package for you (yes, that's quite meta)
+
+For a longer overview of options for different file types [see here](https://cran.r-project.org/web/packages/rio/vignettes/rio.html) and [read here](https://www.datacamp.com/community/tutorials/r-tutorial-read-excel-into-r) for more details on data import. 
+
+---
+# Once we have the data imported 
+
+`r icons::fontawesome("search")` First impressions are important: 
+- `dim(dt)` and `class(dt)`
+- `View(df)` to inspect the whole thing
+- `head(dt)`, `tail(dt)` or just `dt[sample(5),1:5]` 
+- `summary(dt)` or `tibble::glimpse(df)`
+- `names(dt)` or `colnames(dt)`
+
+`r icons::fontawesome("hat-wizard")` **Protip:**  `names()` and `colnames()` are equivalent for data frames, but not for matrices and vectors. 
+
+---
+# Check out the variable labels
+When we import an SPSS file (`sav`), we can inspect labels and value codes.
+```{r eval=TRUE, collapse=TRUE, tidy=TRUE}
+library(labelled)
+attributes(dt$trstun)
+```
+
+---
+# Working with the labels
+We can get the wording of the variables (questions) with *label* and we can get the labels of the answer categories with *labels*.
+They are both **attributes** of the variable.
+
+```{r eval=FALSE, collapse=TRUE}
+lapply(dt, function(x) attributes(x)$label)[1:10]
+lapply(dt, function(x) attributes(x)$labels)[1:5]
+```
+
+---
+# There is alwasy another way
+There is an alternative way to achieve the same thing with the `labelled` package. Note that this will only work on data that is imported with `haven` (and has labels already coded).
+
+```{r eval=FALSE, collapse=TRUE}
+var_label(dt) # variable names
+var_label(dt$gndr) 
+var_label(dt$cntry) <- "country" # can be reassigned
+look_for(dt, 'internet', details=TRUE) # search in variable and value names
+val_labels(dt$stfdem) # inspect the value labels
+```
+
+---
+# Zoom in on some variables 
+
+`r icons::fontawesome("search-plus")` We can also inspect individual variables:
+```{r eval=TRUE, collapse=TRUE}
+table(dt$vote) # this is good for factor-like variables
+prop.table(table(dt$vote)) # turn frequencies into proportions
+summary(dt$polintr) # for continuous variables, use summary
+```
+
+---
+# Transforming variables (1)
+
+`r icons::fontawesome("exchange-alt")` Let's make a real factor
+```{r eval=TRUE, collapse=TRUE}
+summary(dt$new.vote <- factor(dt$vote))
+levels(dt$new.vote) <- c('voted', 'no vote', 'dont know') # recode levels
+summary(dt$new.vote)
+```
+
+---
+# Transforming variables (2)
+You can use `cut()` to split a continuous variable into categories
+```{r eval=TRUE, collapse=TRUE}
+dt$satdem.cat <- cut(dt$stfdem, # which variable
+                     breaks = c(-Inf, 3, 7, Inf), # interval break points, incl. start and end
+                     labels=c("low","medium","high")) # labels of the new categories
+table(dt$satdem.cat)
+```
+---
+# Subsetting (1) 
+
+`r icons::fontawesome("filter")` When we want to subset from a dataset, remember all the ways in which we can index rows and columns:
+
+```{r eval=TRUE, collapse=TRUE}
+dt.subset.1 <- dt [1:10, c('cntry','vote','polintr')]
+dt.subset.2 <- dt [seq(1, 101, by=10), 1:5]
+dt.subset.3 <- dt [dt$vote==1, -c(1:5)]
+dt.subset.nonas <- dt [is.na(dt$vote)==FALSE &
+                         is.na(dt$polintr)==FALSE, 1:5]
+```
+---
+# Subsetting (2) 
+
+`r icons::fontawesome("filter")` You can also use `subset()`, which saves on syntax but is slower and more error-prone
+```{r eval=TRUE, collapse=TRUE}
+dt.subset.4 <- subset (dt, vote==2 | 
+                         polintr > median(polintr, na.rm=TRUE))
+```
+---
+# Getting rid of missing values
+
+`r icons::fontawesome("hat-wizard")` **Protip:**  Use `complete.cases ()` to remove rows with *any* missing value
+```{r eval=TRUE, collapse=TRUE}
+sum(is.na(dt$vote)) # count NAs of individual columns
+dt.subset.complete <- dt [complete.cases(dt)==TRUE,]
+dim(dt.subset.complete) # oops
+```
+
+---
+class: center, inverse, top
+
+background-image: url("figs/wrangle.jpg")
+background-size: contain
+
+---
+# Now let's do thnigs the *tidy* way 
+
+`r icons::fontawesome("align-justify")` So far we used (mostly) functions from `base R` for our data wrangling business. But the `tidyverse` offers a nice, consistent framework for most of our data wrangling needs, so let's move to the `tidyverse`
+
+```{r eval=TRUE, collapse=TRUE}
+library (dplyr) # most of the tidy data wrangling functions are in this package
+library (tidyverse) # which is part of this collection
+
+```
+
+Also, our working environment is getting quite messy. Let's remove objects we don't need to free up memory:
+
+```{r eval=TRUE, collapse=TRUE}
+rm (dt.subset.1, dt.subset.2, dt.subset.3, dt.subset.4, 
+   dt.subset.complete, dt.subset.nonas)
+# rm (list = ls()) # to remove all objects
+```
+
+---
+# Subsetting (the tidy way)
+
+To start with, let's see the tidy ways of subsetting
+
+```{r eval=TRUE, collapse=TRUE}
+# choose columns
+dt.subset.1 <- select (dt, cntry, vote, polintr, stfdem) 
+# choose rows
+dt.subset.1 <- filter (dt.subset.1, vote == 1, 
+                       polintr > 2, stfdem != 0)
+# choose rows by ordinal position
+dt.subset.1 <- slice (dt.subset.1, 1:10) 
+```
+---
+# The need for a pipe (1)
+
+`r icons::fontawesome("hat-cowboy-side")` Normally, when we use many functions, we nest them in each other. For example, this is how it looks when we want to:
+
+.pull-left[
+1. Coerce a vector into a character vector
+2. Then coerce it into a numeric vector
+3. Then take the mean
+4. Then take the square root of the mean
+5. Then round the number to 2 digits 
+]
+
+.pull-right[
+```{r eval=TRUE, collapse=TRUE}
+v = dt[1:100, "stfdem"]
+round(sqrt(
+  mean(
+    as.numeric(
+      as.character(v)
+      ), 
+    na.rm=TRUE)
+  ), 
+digits=2)
+
+```
+]
+
+---
+# The need for a pipe (2)
+
+Not very easy to read, is it? And it usually looks even worse
+
+```{r eval=TRUE, collapse=TRUE}
+round(sqrt(mean(as.numeric(as.character(v)), na.rm=TRUE)), digits=2)
+```
+
+Of course, we can do the operations one by one, but then we will have to reasign the object every step of the way, which is tedious.
+```{r eval=TRUE, collapse=TRUE}
+v = dt[1:100, "stfdem"]  
+v = as.numeric(as.character(v))
+m = sqrt(mean (v, na.rm=T))
+round(m, digits = 2)
+```
+
+---
+# Meet the pipe
+`r icons::fontawesome("smile-beam")` Wouldn't it be nice if we could write the operations in the order that they have to be executed, without having to reassign objects all the time?
+
+`r icons::fontawesome("lightbulb")` It would! And we will! But first we need a new special operator, the pipe `%>%`.
+
+`r icons::fontawesome("hat-wizard")` **Protip:** You can use `CTRL+SHIFT+m` or `CMD+SHIFT+m` to type the pipe in **R Studio**. 
+
+---
+# Using the pipe
+Let's see the pipe in action:
+```{r eval=TRUE, collapse=TRUE}
+v = dt[1:100, "stfdem"]
+
+v %>% 
+  as.character() %>% 
+  as.numeric() %>% 
+  mean(na.rm=TRUE) %>% 
+  sqrt() %>% 
+  round(digits=2)
+```
+
+Tidy, indeed! For a short tutorial on using the pipe, [read here](https://www.datacamp.com/community/tutorials/pipe-r-tutorial).
+
+---
+# More on pipes
+Essentially, the tidy pipe (orginally, from the package `margrittr`) takes the object before the pipe and inserts it as the first argument in the function after the pipe.
+
+`r icons::fontawesome("hat-wizard")` **Protip:** You can insert the object before the pipe at any place in a function by using the `.` operator.
+
+Not so long ago, there was no simple forward pipe in the base R installation. Since, *R version 4.1.0* introduced the operator `|>`, which functions as a 'native' pipe. But there are some differences with the tidy `magrittr` pipe. If you want to know more about the differences, read [this post](https://ivelasq.rbind.io/blog/understanding-the-r-pipe/). Personally, I have had no reason to use the native pipe so far.
+
+---
+# Let's go back to data wrangling (with pipes)
+
+---
+class: center, inverse, top
+background-image: url("figs/pipe.jpg")
+background-size: contain
+
+---
+# Let's go back to data wrangling (with pipes)
+Select and filter 
+
+```{r eval=TRUE, collapse=TRUE}
+dt.subset<- dt %>% 
+  select (cntry, vote, polintr, stfdem) %>% # selecting variables
+  filter (vote==1, polintr>2, stfdem!=0) %>% # filtering observations
+  slice (1:3)
+```
+If we want to keep the output from the pipe, we have to remember to assign it to a (new) object.
+
+`r icons::fontawesome("hat-wizard")` **Protip:** Use `pull()` to extract a single vector (variable).
+
+---
+# Creating new variables is easy
+
+`r icons::fontawesome("plus-square")` To create new variables, use `mutate()`:
+
+```{r eval=TRUE, collapse=TRUE}
+dt %>% 
+  mutate (weight.rounded = round(pspwght, digits=0),
+          country.ess = paste(cntry, essround,  sep="."),
+          vote.factor = factor (vote),
+          vote.dummy.w = ifelse (vote==1, 1, 0)) %>%
+  select (weight.rounded, country.ess, vote.factor, vote.dummy.w) %>%
+  slice(sample (5)) %>%
+  arrange(weight.rounded)
+```
+
+---
+# Recoding variables
+`r icons::fontawesome("recycle")` To recode variables, use `recode()` inside `mutate()`:
+
+```{r eval=TRUE, collapse=TRUE}
+dt.s <- dt %>% 
+  mutate (vote.new = dplyr::recode (as.numeric(vote), '1' = 'voted', '0' = 'no vote', 
+                                    .default = NA_character_), # special tidy NAs
+          stfdem.na = na_if(stfdem, -88),
+          stfdem.newna = replace_na(stfdem, 0)) %>%
+  rename (satdem = stfdem) %>% 
+  select (vote, vote.new, stfdem.na, stfdem.newna, satdem) %>%
+  slice(1:5) 
+dt.s
+```
+
+---
+# Summarizing variables
+We can also summarize variables by groups and add the result to the data:
+
+```{r eval=TRUE, collapse=TRUE}
+dt.s2 <- dt %>% 
+  group_by(cntry) %>% 
+  mutate(stfdem.mean = mean(stfdem, na.rm=TRUE),
+         count=n()) %>% 
+  select(cntry, vote, stfdem, stfdem.mean, count) %>%
+  ungroup()
+
+dt.s2
+```
+
+---
+# Summarizing variables
+There is another way to produce tables of aggregate values:
+
+```{r eval=TRUE, collapse=TRUE}
+dt.aggregate <- dt %>% 
+  group_by(cntry) %>% 
+  summarize(stfdem.mean = mean(stfdem, na.rm=TRUE),
+         count=n()) %>%
+  arrange(desc(stfdem.mean))  # order by the values of a variable in descending order
+
+dt.aggregate
+```
+
+---
+# Merging data (1)
+
+`r icons::fontawesome("object-group")` It is easy to merge datasets together, when we have a common variable. Just be careful: there are different ways to merge (compare the results across the four tabs):
+
+.panelset[
+  .panel[.panel-name[Inner join]
+
+```{r panel-chunk1}
+d1 <- data.frame(cbind ("ID" = c("A","C"), "values" = c(1:2)))
+d2 <- data.frame(cbind ("ID" = c("A","D"), "values" = c(3:4)))
+
+inner_join(d1, d2, by='ID') # only observations that are in both are kept
+```
+]
+
+.panel[.panel-name[Left join]
+```{r panel-chunk2}
+d1 <- data.frame(cbind ("ID" = c("A","C"), "values" = c(1:2)))
+d2 <- data.frame(cbind ("ID" = c("A","D"), "values" = c(3:4)))
+
+left_join(d1, d2, by='ID') # all observations from d1 are kept
+```
+]
+
+.panel[.panel-name[Right join]
+```{r panel-chunk3}
+d1 <- data.frame(cbind ("ID" = c("A","C"), "values" = c(1:2)))
+d2 <- data.frame(cbind ("ID" = c("A","D"), "values" = c(3:4)))
+
+right_join(d1, d2, by='ID') # all observations from d2 are kept
+```
+]
+
+.panel[.panel-name[Full join]
+```{r panel-chunk4}
+d1 <- data.frame(cbind ("ID" = c("A","C"), "values" = c(1:2)))
+d2 <- data.frame(cbind ("ID" = c("A","D"), "values" = c(3:4)))
+
+full_join(d1, d2, by='ID') # all observations are kept
+```
+]
+]
+
+---
+# Merging data (2)
+`r icons::fontawesome("exclamation-circle")` Beware situations where the merging variable has non-unique values in one of the datasets. New rows can be silently added to the left-hand side dataset, for example:
+
+```{r collpase=TRUE}
+d1 <- data.frame(cbind ("ID" = c("A","C"), "values" = c(1:2)))
+d2 <- data.frame(cbind ("ID" = c("A","A"), "values" = c(3:4)))
+
+left_join(d1, d2, by='ID') # now the result has three rows!
+```
+
+---
+# Combining datasets 
+`r icons::fontawesome("object-ungroup")` We can also combine combine datasets by row (adding observations from two or more datasets):
+```{r eval=TRUE, collapse=TRUE}
+d1 <- dt [1:100, ]
+d2 <- dt [101:200, ]
+d.combined <- bind_rows(d1, d2, .id = "id.dataset")
+d.combined [c(1:2, 101:102), 1:3]
+```
+The last argument creates an *id* variable for the dataset from which the observation came from. 
+
+---
+# Batch processing
+Often we want to do operations on more than one variable. Then we can use `mutate_all()`, `mutate_at`, `mutate_if` and their equivalents.
+
+```{r eval=TRUE, collapse=TRUE}
+dt [1:2, 19:20]
+dt.s <- dt %>% 
+  mutate_at (19:20, mean, na.rm=TRUE) %>%
+  mutate_at (19:20, round, digits=1) 
+dt.s [1:2,19:20]
+```
+
+---
+# Batch renaming
+We can also rename batches of column names. Note that we can select names that we want with `starts_with()`, `ends_with`, `contains()` and `matches()`.
+
+```{r eval=FALSE, collapse=TRUE}
+dt <- dt %>% rename_at(vars(starts_with("trst")), ~ paste0("newname", .))
+```
+
+---
+# More data
+`r icons::fontawesome("database")` For the next steps, let's get some data straight from the internet. The Dutch Statistics Office (CBS) has its own package that allows direct access to its data: 
+
+```{r eval=TRUE, collapse=TRUE}
+library(cbsodataR)
+im <- cbs_get_data('60032') %>% # Migratie; land van herkomst / vestiging, geboorteland, geslacht; 1995-2022
+  cbs_add_label_columns() %>% 
+  cbs_add_date_column() 
+```
+
+---
+# Some reorganization
+These operations should all be familiar:
+```{r eval=TRUE, collapse=TRUE}
+ims2 <- im %>%
+  filter(Geslacht_label != 'Totaal mannen en vrouwen',
+         LandVanHerkomstVestiging_label == 'Totaal landen',
+         Geboorteland_label == 'Totaal',
+         Perioden_freq == 'Y') %>%
+  rename (year = Perioden_label,
+          immigration = Immigratie_1,
+          sex = Geslacht_label) %>% 
+  select (year, immigration, sex) 
+```
+
+---
+# Long to wide and back to long 
+
+`r icons::fontawesome("random")` There are two functions to help us reshape data from long to wide format and vice versa: `tidyr::pivot_longer` and `tidyr::pivot_wider`.
+Let's try to make them work with the `im` dataset. 
+
+---
+# Pivoting data: long to wide
+`r icons::fontawesome("random")` Often data is in a *long* format, when we need it *wide*.
+
+```{r eval=TRUE, collapse=TRUE}
+ims2[c(1,dim(ims2)[1]), ]
+```
+
+```{r eval=TRUE, collapse=TRUE}
+ims2.w <- pivot_wider(ims2, # the dataset
+     names_from = sex, # which variable (with categories) to unpack
+     values_from = immigration, # where to get the values from
+     names_prefix = 'im_') # optional, to change labels
+head(ims2.w, 2)
+```
+---
+# Pivoting data: wide to long 
+`r icons::fontawesome("random")` But then other times data is in a *wide* format, and we need it *long*.
+```{r eval=TRUE, collapse=TRUE}
+ims2.l <- pivot_longer(ims2.w, # the dataset
+     cols= c(im_Mannen, im_Vrouwen), # which variables to collapse
+     names_to = 'sex', # name of the new variable with the categories
+     values_to = 'immigration') # name of the new variable with the data
+head(ims2.l, 2)
+```
+
+---
+# More on data wrangling 
+`r icons::fontawesome("bookmark")` A good short introduction to data wrangling with the `tidyverse` is available [here](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html).
+
+`r icons::fontawesome("images")` These are great animations of what the tidyverse verbs do: Part I by [Garrick Aden-Buie](https://www.garrickadenbuie.com/project/tidyexplain/) and Part II by [Andrew Heiss](https://www.andrewheiss.com/blog/2024/04/04/group_by-summarize-ungroup-animations/).
+
+`r icons::fontawesome("table")` Here is a [good resource](https://cran.r-project.org/web/packages/labelled/vignettes/labelled.html) for working with SPSS labelled data. This is another useful [blog post](https://martinctc.github.io/blog/working-with-spss-labels-in-r/) for working with survey data.
+
+---
+# Exporting data 
+
+`r icons::fontawesome("file-export")` After all this hard work, it would be a shame if we lose it. We can save data in multiple formats.
+
+R has its own format `.RData`, which is great, but not for people who don`t use R. 
+```{r eval=TRUE, collapse=TRUE}
+save(dt, file='./data_out/mydata.RData')
+```
+Note that we import `.RData` files with `load(file = "./pathtoyour/mydata.RData")`.
+
+Saving as a `csv` is usually a good idea, especially if you work with others. We can also save `sav` and `dta` files with the `haven` package. 
+```{r eval=TRUE, collapse=TRUE}
+write.csv (dt, './data_out/mydata.csv')
+write_sav(df, "./data_out/mydata.sav")
+```
+
+---
+# How to get in touch?
+
+`r icons::fontawesome("envelope")` demetriodor@gmail.com
+
+`r icons::fontawesome("chrome")` [http://dimiter.eu](http://dimiter.eu)
+
+`r icons::academicons("conversation")` @dtoshkov.bsky.social
+
+`r icons::fontawesome$brands$twitter` @DToshkov
+
+`r icons::fontawesome("github")` [github.com/demetriodor](https://github.com/demetriodor/)
+
+`r icons::fontawesome("linkedin")` Dimiter Toshkov

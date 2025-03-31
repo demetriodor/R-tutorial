@@ -1,0 +1,852 @@
+---
+title: "R for Data Analysis: A Short  Tutorial"
+subtitle: "Session 4: Visualizing data"
+author: "Dimiter Toshkov"
+institute: "Institute of Public Administration, Leiden University"
+date: "last updated: `r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    self_contained: yes
+    css: [default, metropolis, metropolis-fonts]
+    lib_dir: libs
+    chakra: libs/remark-latest.min.js
+    nature:
+      titleSlideClass: [top, left, inverse]
+      highlightStyle: github
+      highlightLines: true
+      ratio: "16:9"
+      countIncrementalSlides: false
+
+---
+# Last session...
+
+```{r xaringanExtra-search, echo=FALSE}
+xaringanExtra::use_search(show_icon = TRUE)
+```
+
+```{r xaringan-extra-styles, echo=FALSE}
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         #<<
+  mute_unhighlighted_code = TRUE  #<<
+)
+```
+
+```{r xaringanExtra, echo = FALSE}
+xaringanExtra::use_progress_bar(color = "white", location = "top")
+```
+
+<style type="text/css">
+
+.title-slide {
+  background-image: url(https://cran.r-project.org/Rlogo.svg);
+  background-position: 50% 0%; ## just start changing this
+  background-size: 150px;
+  background-color: #fff;
+  padding-left: 100px;  /* delete this for 4:3 aspect ratio */
+}
+
+.remark-slide-content {
+    font-size: 28px;
+    padding: 1em 1em 1em 1em;
+}
+
+.remark-slide-content > h1 {
+  font-size: 32px;
+  margin-top: -85px;
+}
+
+</style>
+
+--
+`r icons::fontawesome("check-double")` We learned how to explore univariate data.
+
+--
+`r icons::fontawesome("check-double")` We learned how to test and examine bivariate relationships.
+
+--
+`r icons::fontawesome("check-double")` We learned how to run a variety of statistical models and export the output.
+
+--
+`r icons::fontawesome("forward")` Today we focus on data visualization.
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(fig.retina = 3, warning = FALSE, message = FALSE)
+```
+
+---
+class: inverse, top
+
+background-image: url("figs/static_winner.png")
+background-size: contain
+
+# Here is a dataviz done entirely in (base) R
+
+---
+# Data menu for today (1)
+
+`r icons::fontawesome("globe-europe")` Today we gonna work with data from the World Bank. First, let's get a list of the ISO-3 country codes of all European countries:
+
+```{r eval=TRUE, collapse=TRUE}
+library(tidyverse)
+library(countrycode)
+countries.iso3 <- countrycode::codelist %>% 
+  filter (continent == 'Europe') %>% 
+  select (country.name.en) %>% 
+  mutate (country.code = countrycode(country.name.en, 
+                                        origin='country.name', 
+                                        destination='iso3c'))
+```
+
+---
+# Data menu for today (2)
+`r icons::fontawesome("globe")` Now we are ready to extract the data:
+```{r eval=TRUE, collapse=TRUE}
+library(wbstats)
+d <- wb(indicator = c("SI.POV.GINI", "SP.POP.TOTL","NY.GDP.PCAP.PP.KD",
+                      "SL.UEM.TOTL.ZS", "CC.EST", "GE.EST"), 
+ country = countries.iso3$country.code, startdate = 2000, enddate = 2024, 
+ return_wide = TRUE) %>%
+ rename (year = date, control.corruption = CC.EST, government.effectiveness = GE.EST,
+          gdp.per.capita = NY.GDP.PCAP.PP.KD, gini = SI.POV.GINI, 
+          unemployment = SL.UEM.TOTL.ZS, population = SP.POP.TOTL) %>%
+ mutate (index.dy = paste0(iso3c, ".", year), 
+          gdp.per.capita = gdp.per.capita/1000, # rescale in thousands
+          population = population/1e6 # rescale in millions
+  ) 
+
+d.2023 <- d %>% filter (year == '2023') # subset with the 2023 data
+```
+
+---
+# Data visualization systems in R
+
+We have two main systems for producing graphs in R:
+- The `plot` commands in base R; 
+- `ggplot2`, which is a package part of the `tidyverse`.
+
+Most of my colleagues consider the `ggplot2` system far superior. Personally, I am not so sure. Plotting in base R provides more direct control over every aspect of the graphs. But there are advantages to working in a system integrated in the `tidyverse` and supported by an ever-expanding number of extensions. 
+
+In any case, you have to have some familiarity with both. 
+
+---
+# Plotting in base R
+
+in base R, the main plotting function is ... *surprise, surprise* ... `plot()`, with variations for specific types of plots, such as `boxplot()` or `hist()`. You can use these for quick-and-dirty data exploration. But for production-level graphs (online or in print), my approach is to start with an empty canvas and add one-by-one every element that I need. 
+
+---
+# Start with an empty plot
+This code does ... not much more than open a sheet for us to use: 
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+plot (NULL, 
+ type='n', # start with an empty plot
+ axes = FALSE, # no axes
+ ann =FALSE, # no annotation
+ xlim = c(0, 150), # but give limits to the x-
+ ylim = c(-1.5, 2.5) # and y-axes
+      ) 
+```
+]
+
+.pull-right[
+```{r echo=FALSE, eval=TRUE, collapse=TRUE}
+plot (NULL, type='n', # start with an empty plot
+      axes = FALSE, # no axes
+      ann =FALSE, # no annotation
+      xlim = c(0,150), # but specify the limits of the x-axis
+      ylim = c(-1.5, 2.5) # and of the y-axis
+      ) 
+```
+]
+
+---
+# Now let's add data points
+
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+# add to the previous block
+library (scales)
+pop.scaled <- rescale(d.2023$population, 
+              to=c(0.5, 2))
+
+points (x = d.2023$gdp.per.capita,
+  y = d.2023$government.effectiveness, 
+  col = 'coral1',
+  pch = 16, 
+  cex = pop.scaled)
+```
+]
+
+.pull-right[
+```{r echo=FALSE, eval=TRUE, collapse=TRUE}
+library (scales)
+pop.scaled <- rescale(d.2023$population, to=c(0.5, 2))
+
+plot (NULL, type='n', # start with an empty plot
+      axes = FALSE, # no axes
+      ann =FALSE, # no annotation
+      xlim = c(0,150), # but specify the limits of the x-axis
+      ylim = c(-1.5, 2.5)) # and of the y-axis
+      
+      points (x = d.2023$gdp.per.capita, 
+        y = d.2023$government.effectiveness, 
+        col = 'coral1',
+        pch = 16, 
+        cex = pop.scaled)
+```
+]
+
+---
+# Now let's add our custom-made axes
+
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+# add to the previous block
+axis (side = 1, font = 1, tck = -0.01, 
+      line=0, col = 'darkgrey', 
+      col.axis = 'darkgrey', 
+      at = seq(0, 150, by = 25), 
+      labels = c(0, paste0(seq(25, 150, by = 25), ",000$")), 
+      cex.axis = 0.75)
+
+axis (2, las=1, font = 1, tck = -0.01, 
+      line=0, col = 'darkgrey', 
+      col.axis = 'darkgrey', 
+      at = seq(-2.5, 2.5, by = 0.5), 
+      labels = format(round(seq(-2.5, 2.5, by = 0.5), 2), nsmall = 2), 
+      cex.axis = 0.75)
+
+```
+]
+
+.pull-right[
+```{r echo=FALSE, eval=TRUE, collapse=TRUE}
+plot (NULL, type='n', # start with an empty plot
+      axes = FALSE, # no axes
+      ann =FALSE, # no annotation
+      xlim = c(0,150), # but specify the limits of the x-axis
+      ylim = c(-1.5, 2.5)) # and of the y-axis
+      
+      points (x = d.2023$gdp.per.capita, 
+        y = d.2023$government.effectiveness, 
+        col = 'coral1',
+        pch = 16, 
+        cex = pop.scaled)
+    
+      axis (side = 1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(0, 150, by = 25), labels = c(0, paste0(seq(25, 150, by = 25), ",000$")), 
+      cex.axis = 0.75)
+
+      axis (2, las=1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(-2.5, 2.5, by = 0.5), 
+      labels = format(round(seq(-2.5, 2.5, by = 0.5), 2), nsmall = 2), 
+      cex.axis = 0.75)
+```
+]
+
+---
+# We can add annotation
+
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+# add to the previous block
+title (
+ main = 'Government effectiveness as a function of wealth',
+ xlab = 'GDP per capita (constant 2002 international dollars), 2023',
+ ylab = 'Government effectiveness score, 2023',
+ col.lab = 'darkgrey'
+ )
+```
+]
+
+.pull-right[
+```{r echo=FALSE, eval=TRUE, collapse=TRUE}
+plot (NULL, type='n', # start with an empty plot
+      axes = FALSE, # no axes
+      ann =FALSE, # no annotation
+      xlim = c(0,150), # but specify the limits of the x-axis
+      ylim = c(-1.5, 2.5)) # and of the y-axis
+      
+      points (x = d.2023$gdp.per.capita, 
+        y = d.2023$government.effectiveness, 
+        col = 'coral1',
+        pch = 16, 
+        cex = pop.scaled)
+    
+      axis (side = 1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(0, 150, by = 25), labels = c(0, paste0(seq(25, 150, by = 25), ",000$")), 
+      cex.axis = 0.75)
+
+      axis (2, las=1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(-2.5, 2.5, by = 0.5), 
+      labels = format(round(seq(-2.5, 2.5, by = 0.5), 2), nsmall = 2), 
+      cex.axis = 0.75)
+      
+      title (main = 'Government effectiveness as a function of wealth',
+       xlab = 'GDP per capita (constant 2002 international dollars), 2023',
+       ylab = 'Government effectiveness score, 2023',
+       col.lab = 'darkgrey')
+      
+```
+]
+
+---
+# Time to add lines
+
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+# add to the previous block
+abline(v = seq( 25, 150, by = 25), 
+       col='grey80') # add the vertical grid
+
+abline(h = seq(-2, 3, by = 1), 
+       col='grey80') # add the horizontal grid
+
+abline (lm(government.effectiveness ~ gdp.per.capita, 
+           data=d.2023), 
+        col = 'coral3') # regression fit
+```
+]
+
+.pull-right[
+```{r echo=FALSE, eval=TRUE, collapse=TRUE}
+plot (NULL, type='n', # start with an empty plot
+      axes = FALSE, # no axes
+      ann =FALSE, # no annotation
+      xlim = c(0,150), # but specify the limits of the x-axis
+      ylim = c(-1.5, 2.5)) # and of the y-axis
+      
+      abline(v = seq( 25, 150, by = 25), 
+       col='grey80') # add the vertical grid
+
+      abline(h = seq(-2, 2.5, by = 0.5), 
+       col='grey80') # add the horizontal grid
+
+      abline (lm(government.effectiveness ~ gdp.per.capita, 
+           data=d.2023), 
+        col = 'coral3') # regression fit
+
+      points (x = d.2023$gdp.per.capita, 
+        y = d.2023$government.effectiveness, 
+        col = 'coral1',
+        pch = 16, 
+        cex = pop.scaled)
+    
+      axis (side = 1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(0, 150, by = 25), labels = c(0, paste0(seq(25, 150, by = 25), ",000$")), 
+      cex.axis = 0.75)
+
+      axis (2, las=1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(-2.5, 2.5, by = 0.5), 
+      labels = format(round(seq(-2.5, 2.5, by = 0.5), 2), nsmall = 2), 
+      cex.axis = 0.75)
+      
+      title (main = 'Government effectiveness as a function of wealth',
+       xlab = 'GDP per capita (constant 2002 international dollars), 2023',
+       ylab = 'Government effectiveness score, 2023',
+       col.lab = 'darkgrey')
+
+```
+]
+
+---
+# We can add text as well
+
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+# add to the previous block
+text (cex = 0.75, col = 'darkgrey', 
+      x = 125, y = -1.25, 
+      paste0("Correlation = ", 
+      round(cor (d$government.effectiveness, 
+                 d$gdp.per.capita, use='complete'), 2)))
+
+text (cex = 0.75, col = 'coral1',
+      d.2023$iso2c[d.2023$gdp.per.capita>100], 
+      x = d.2023$gdp.per.capita[d.2023$gdp.per.capita>100],
+      y = d.2023$government.effectiveness[d.2023$gdp.per.capita>100] - 0.1)
+
+text (cex = 0.75, col = 'coral1',
+      d.2023$iso2c[d.2023$government.effectiveness < -0.55], 
+      x = d.2023$gdp.per.capita[d.2023$government.effectiveness < -0.55],
+      y = d.2023$government.effectiveness[d.2023$government.effectiveness < -0.55] - 0.1)
+ 
+```
+]
+
+.pull-right[
+```{r echo=FALSE, eval=TRUE, collapse=TRUE}
+plot (NULL, type='n', # start with an empty plot
+      axes = FALSE, # no axes
+      ann =FALSE, # no annotation
+      xlim = c(0,150), # but specify the limits of the x-axis
+      ylim = c(-1.5, 2.5)) # and of the y-axis
+      
+      abline(v = seq( 25, 150, by = 25), 
+       col='grey80') # add the vertical grid
+
+      abline(h = seq(-2, 3, by = 1), 
+       col='grey80') # add the horizontal grid
+
+      abline (lm(government.effectiveness ~ gdp.per.capita, 
+           data=d.2023), 
+        col = 'coral3') # regression fit
+
+      points (x = d.2023$gdp.per.capita, 
+        y = d.2023$government.effectiveness, 
+        col = 'coral1',
+        pch = 16, 
+        cex = pop.scaled)
+    
+      axis (side = 1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(0, 150, by = 25), labels = c(0, paste0(seq(25, 150, by = 25), ",000$")), 
+      cex.axis = 0.75)
+
+      axis (2, las=1, font = 1, tck = -0.01, line=0, col = 'darkgrey', col.axis = 'darkgrey', 
+      at = seq(-2.5, 2.5, by = 0.5), 
+      labels = format(round(seq(-2.5, 2.5, by = 0.5), 2), nsmall = 2), 
+      cex.axis = 0.75)
+      
+      title (main = 'Government effectiveness as a function of wealth',
+       xlab = 'GDP per capita (constant 2002 international dollars), 2023',
+       ylab = 'Government effectiveness score, 2023',
+       col.lab = 'darkgrey')
+      
+text (cex = 0.75, col = 'darkgrey', 
+      x = 125, y = -1.25, 
+      paste0("Correlation = ", 
+      round(cor (d$government.effectiveness, 
+                 d$gdp.per.capita, use='complete'), 2)))
+
+text (cex = 0.75, col = 'coral1',
+      d.2023$iso2c[d.2023$gdp.per.capita>100], 
+      x = d.2023$gdp.per.capita[d.2023$gdp.per.capita>100],
+      y = d.2023$government.effectiveness[d.2023$gdp.per.capita>100] - 0.1)
+
+text (cex = 0.75, col = 'coral1',
+      d.2023$iso2c[d.2023$government.effectiveness < -0.55], 
+      x = d.2023$gdp.per.capita[d.2023$government.effectiveness < -0.55],
+      y = d.2023$government.effectiveness[d.2023$government.effectiveness < -0.55] - 0.1)
+```
+]
+
+---
+# We are not done yet!
+
+There are additional adjustments we can do. Before we even start the (empty plot), we call the `par()` function, which specifies some basic parameters of the plot, such as the the size of the margins on the four sides of the plot, the background color, the font, etc. For all the options, see `?par`. You can set global options with `par()` for size and color, but it is often better not to do that here, but in the settings for the respective elements of the plot (e.g. the axes). This is an example of how to set some basics:
+
+```{r eval=FALSE, collapse=TRUE}
+par(mar = c (2, 2, 4, 0), # margins on the four sides in lines (b,l,t,r)
+    bg = rgb (249, 249, 249), # background color (off-white is nice sometimes)
+    bty = 'n', # type of box around the plot (no, thanks)
+    family = 'Montserrat' # custom font (you have to get it first)
+``` 
+
+---
+# Beyond scatterplots
+We can use the same approach - start with an empty plot and add elements - to produce any kind of plots. For example, we can add a set of rectangles with `rect()` to produce a barplot or a set of polygons with `polygon()` to produce an area plot. We already saw how we can combine lines and dots, which comes handy for plotting data over time.
+
+I have written [a detailed guide](https://dimiter.eu/Visualizations_files/ESS/Visualizing_ESS_data.htm) on making a barplot from scratch. The result is on the next slide. An area plot taken from [here](https://www.dimiter.eu/Visualizations_files/csnl.html) also follows. The example of a line plot is from [here](https://dimiter.eu/Visualizations_files/CEE.html).
+
+
+---
+class: inverse, top
+
+background-image: url("figs/ess_barplot.png")
+background-size: contain
+
+# A barplot done entirely in (base) R
+
+---
+class: inverse, top
+
+background-image: url("figs/cs_f15.png")
+background-size: contain
+
+# An area desnity plot done entirely in (base) R
+
+---
+class: inverse, top
+
+background-image: url("figs/gdppc_region.png")
+background-size: contain
+
+# A time series line plot done entirely in (base) R
+
+---
+# Taking your plots to the next level (1)
+Some tips to customize and improve further your plots:
+
+- Use `mtext()` to produce the titles, subtitles and lab names. Text produced with `mtext()` can be placed anywhere in the margins of the plot, it can be positioned very precisely, and - most importantly - it can combine text with different colors in the same expression. This allows you to embed the legend of your plots directly in the titles. We do that by `phantom`-ing some parts of the text:
+
+```{r eval=FALSE, collapse=TRUE}
+# add to previous block
+mtext(text=expression("Data: " * phantom("World Bank [2023]")), 
+      side=1, line=-0.5, outer=T, at = 1, col="darkgrey", cex=0.8, 
+      font=1, adj=1, padj=1)
+mtext(text=expression(phantom("Data: ") * "World Bank [2023]"), 
+      side=1, line=-0.5, outer=T, at = 1, col="coral3", cex=0.8, 
+      font=1, adj=1, padj=1)
+```
+
+---
+# Taking your plots to the next level (2)
+
+- To use custom fonts, install and load the packages `systemfonts` and `extrafont`. The `sysfonts` package let's you check and download free fonts from Google. The library `showtext` allows you to use the extra fonts. The function to add fonts from Google is `font_add_google()`, and `font_families()` checks that the fonts you want are installed and available. You turn on the custom fonts availability every session with `showtext_auto()` and - optionally - you set the resolution with `showtext_opts(dpi = 96)` (if you want it at 96 dpi, which also happens to be the default).
+
+---
+# One plot is not enough (1)
+
+Often, we want to combine several plots (or panels) into the same data visualization. For simple layouts, we can specify an `mfrow()` argument in `par()`. For example, to create four equally-sized panels in two columns, we can write `par(mfrow(c(2, 2)))`. For more complex layouts, we have to call `layout()` before running `par()` and the individual plots. The function `layout()` accepts a matrix of rows and columns with numbers in the cells that correspond to the plots. 
+
+---
+# One plot is not enough (2)
+
+For example, the layout below will fit a total of 5 plots, with the first big one taking four cells on the left side of the plot space, and plots 2-5 taking one cell each on the right side of the plot space. The order in which you produce the plots sends them to their respective slot. So, if you want a plot to take the bottom-right corner, run it last (if you work with the layout below).
+
+```{r eval=TRUE, collapse=TRUE}
+layout(matrix(c(1, 1, 2, 3,
+                1, 1, 4, 5), 
+              nrow=2, byrow=TRUE)
+       )
+```
+---
+# Saving and exporting your plots
+We managed to produce some pretty nice graphs already, but for now they are only available in the Plots Viewer. Don't use the export menu from Plots to save your work. We want to do that work programatically. 
+
+You can save the plots in different formats. The routine is the same:
+- first, we open the device to which to save (`png`, `pdf`, `tiff`, etc.);
+- when we do that, we specify the size and resolution;
+- then, we run the plot syntax (which would not print in our Plots viewer!);
+- then, we close writing to the device with the function `dev.off()`;
+- finally, we are ready to find the file with our plot, open it to shine in all its glory, and admire it.
+
+---
+# Getting publication-ready files (1)
+It is quite a bother to get the right size, resolution and file type so that your plots look crisp, legible and ready for publication online or in print. I have figured out parameters that work for me, but perhaps you can discover better or more efficient ways to produce publication-ready graphs.
+
+Many journals require `tiff` files for graphics. You can export your plots in `tiff` format with:
+
+```{r eval=FALSE, collapse=TRUE, tidy=TRUE}
+tiff ('./figures/filname.tiff', width = 8.5, height = 6, units = 'in', res = 300)
+### plot comes here
+dev.off()
+```
+
+You might need to adjust the size of text and points and the width of lines to be legible and clearly visible. Note that file size can be substantial. 
+
+---
+# Getting publication-ready files (2)
+You can adjust sizes by specifying a scaling factor, e.g. `scaling.factor = 3` before plotting and use it to change all features of the graph until you get the desired result. For example, I find these settings for a `png` acceptable for screens:
+
+```{r eval=FALSE, collapse=TRUE, tidy=TRUE}
+scaling.factor = 2
+png ('./figures/F1_big.png', width=1280*scaling.factor, height=905.5*scaling.factor, res=96)
+### plot comes here
+dev.off()
+```
+Note that the resolution is lower, but the size in pixels is bigger. Accordingly, text, points and line width need to be scaled up (multiplied by 2 or so) as well. Filesize remains small.
+
+---
+class: inverse, top
+
+background-image: url("figs/F1_big.png")
+background-size: contain
+
+# Here is our plot exported as a 'png'
+
+---
+# Getting publication-ready files (3)
+Finally, you can save a `pdf`, which looks great at any resolution. Just make sure that text is large enough to be readable, but not too large to overflow from the page. These are some standard dimensions:
+
+```{r eval=FALSE, collapse=TRUE, tidy=TRUE}
+pdf ('./figures/F1_A4.pdf', width=11.69, height=8.27)
+### plot comes here
+dev.off()
+```
+
+---
+# Summing up plotting with base R
+
+To sum up the procedure for making graphs with base R:
+1. start a printing device, e.g. `png()`;
+2. lay out the layout with `layout()`;
+3. specify the main parameters with `par()` (before each plot, if they differ);
+4. run the plots one by one in the order to fill their respective slots in the layout matrix;
+5. close with `dev.off()` when you are done.
+
+---
+# Why leave base R for ggplot2?
+Clearly, we can achieve pretty much anything we want in base R. You can see why I have little enthusiasm for alternative systems, such as `ggplot`. However...
+
+- The default settings of `ggplot2` are more sensible than the default settings of base R. So if you don't want to tinker with the details, working with `ggplot2` is faster.
+- There are a few extensions for `ggplot2` that make specific tasks much easier, e.g. including non-parametric line fits (see below) or dealing with [overlapping axis labels](https://www.andrewheiss.com/blog/2022/06/23/long-labels-ggplot/).
+- There are higher-order libraries that, for example, illustrate statistical model results, which are built on top of `ggplot2`, so we have to know how to customize those.
+
+---
+# A line plot in `ggplot2` (1)
+The code below produces a line plot showing a flexible, non-parametric fit.
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+library(ggplot2)
+dt <- haven::read_sav("./data/ESS11.sav") 
+
+ggplot(dt, aes(x = lrscale, y = stfdem)) +
+  geom_smooth(method='gam', color = 'darkblue') + 
+      labs(x = 'Left-Right Self-Placement', 
+           y = "Satisfaction with Democracy", 
+       title =  'Democracy and ideology', 
+       subtitle = ''  ,
+       caption = 'Data: ESS Wave 11 (2023)') +
+  theme_minimal(base_size = 16) +
+  scale_y_continuous() +
+  scale_x_continuous(breaks = seq(0, 10, 1)) 
+
+```
+]
+
+.pull-right[
+```{r eval=TRUE, echo=FALSE, collapse=TRUE}
+library(ggplot2)
+library(haven)
+dt <- read_sav("./data/ESS11.sav") 
+
+p<- ggplot(dt, aes(x = lrscale, y = stfdem)) +
+  geom_smooth(method='gam', color = 'darkblue') + 
+      labs(x = 'Left-Right Self-Placement', 
+           y = "Satisfaction with Democracy", 
+       title =  'Democracy and ideology', subtitle = ''  ,
+       caption = 'Data: ESS Wave 11 (2023)') +
+  theme_minimal(base_size = 16) +
+  scale_y_continuous() +
+  scale_x_continuous(breaks = seq(0, 10, 1)) 
+p
+```
+]
+
+---
+# A line plot in `ggplot2` (2)
+We can make some improvements.
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+# add with + to the previous block
+ theme(plot.margin = unit(c(2,1,1.5,1.5), "lines"),
+        panel.grid.major = element_line(colour="lightgrey", size=0.2),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_blank(),   
+        axis.ticks = element_blank(),
+        axis.text.x = element_text(vjust = 6),
+        axis.text.y = element_text(hjust = 2),
+        plot.caption = element_text(vjust= -2), 
+        plot.title = element_text(vjust=1, size = 20, face='bold'))
+```
+]
+
+.pull-right[
+```{r eval=TRUE, echo=FALSE, collapse=TRUE}
+p +  theme(plot.margin = unit(c(2,1,1.5,1.5), "lines"),
+        panel.grid.major = element_line(colour="lightgrey", size=0.2),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_blank(),   
+        axis.ticks = element_blank(),
+        axis.text.y = element_text(hjust = 2),
+        plot.caption = element_text(vjust= -2), 
+        plot.title = element_text(vjust=1, size = 20, face='bold'))
+  
+```
+]
+
+---
+# Small multiples
+One plot type for which `ggplot2` is very convenient is **small multiples** (several small panels of the same plot per some category). Here is an example: 
+
+```{r eval=FALSE, echo=TRUE, collapse=TRUE}
+plot1 <- ggplot(dt, aes(lrscale, stfdem)) +
+  geom_smooth(span = 0.4) + 
+  labs(title =  'Democracy and Ideology per Country (2023)', x = 'Left-Right Self-Placement', y = 'Satisfaction with Democracy') +
+  coord_cartesian(ylim=c(2,8)) +
+  scale_x_continuous(breaks = seq(0,10,2)) + scale_y_continuous(breaks = c(0,3,5,7,10)) +
+  theme_minimal(base_size = 16*3) +
+  theme(panel.grid.major = element_line(colour="lightgrey", size=0.2),
+        panel.grid.minor = element_line(size = 0.1),
+        plot.title = element_text(vjust=1, size = 20*3, face='bold')) +
+  facet_wrap(vars(cntry), nrow=4)
+
+ggsave(plot1, file = './figures/facets.png', width = 12, height = 9, bg='white')
+```
+---
+class: inverse, top
+
+background-image: url("figs/facets.png")
+background-size: contain
+
+# Here is our `ggplot2` graph exported as `png`
+
+
+---
+# Making boxplots with ggplot2
+This will be one fancy-looking boxplot.
+```{r eval=FALSE, collapse=TRUE}
+dt$sex = ifelse (dt$gndr==1, 'male', 'female')
+p1<-ggplot(dt[1:300,], aes(x=sex, y=stfdem, fill=sex)) +
+  geom_boxplot(alpha=0.6, width=0.55) + theme_bw() + 
+  theme(axis.text=element_text(size=12,face="bold"), 
+        axis.title=element_text(size=14,face="bold"))+
+  geom_jitter(alpha=0.2, width = 0.15, height=0.15)+
+  stat_summary(fun.y=mean, geom="point", shape=20, 
+               size=5, color="red", fill="black") +
+  theme(legend.position="none") + 
+  ylab("Satisfaction with democracy")+xlab("")+
+  scale_fill_brewer(palette="Set3")+
+  scale_y_continuous(breaks=seq(0,10,1), labels=seq(0,10,1))+coord_flip()
+ggsave(p1, file = "./figures/f1a.png", width = 7, height = 4)
+```
+
+---
+class: inverse, center, middle
+background-image: url("figures/f1a.png")
+background-size: contain
+
+# Fancy boxplot with ggplot2
+
+---
+# Illustrating statistical models
+With the tools that we learned, we can produce plots of marginal effects from scratch. These are just dot-and-whiskers plots, with the dots corresponding to the coefficients and the whiskers to the confidence intervals. This is easy in the case of linear models, but it becomes more complex in the presence of interactions and for non-linear models. Thankfully, there are packages that produce marginal effects plots directly.
+
+```{r eval=TRUE, collapse=TRUE}
+dt$age.cat <- factor(cut(dt$agea, breaks=c(-Inf, 25, 40, 60, Inf), 
+              labels = c('18-25','26-40','41-60','60+')))
+library(fixest)
+m1a <- feols (stfdem ~ age.cat / etfruit, data=dt, cluster=~cntry) 
+
+# Prepare a dictionary for variable names
+dict1 = c('age.cat18-25:etfruit' = 'Fruit Consumptiont (18-25 olds)',
+          'age.cat26-40:etfruit' = 'Fruit Consumption (26-40 olds)',
+          'age.cat41-60:etfruit' = 'Fruit Consumption (41-60 olds)',
+          'age.cat60+:etfruit' = 'Fruit Consumption (60+ olds)')
+```
+---
+# Showing (off) effects (1)
+Marginal effects with `modelsummary`. The plot thickens: eating fruit decreases satisfaction with democracy only for the middle-aged!
+.pull-left[
+```{r eval=FALSE, collapse=TRUE}
+library(modelsummary)
+p1a <- modelplot(m1a, coef_map=dict1, size=3) +
+    geom_vline(xintercept = 0, col = "red", linewidth=2) +
+  labs(x = "Marginal effects of Fruit Consumption on\n
+       Satisfaction with Democarcy across age groups") +
+  theme_bw(base_size = 16*2) 
+
+png ('./figures/marginal_effects_1.png', 
+     width=1280*2, height=905.5*2, res=96)
+p1a
+dev.off()
+```
+]
+.pull-right[
+```{r eval=TRUE, echo=FALSE, collapse=TRUE}
+library(modelsummary)
+p1a <- modelplot(m1a, coef_map=dict1, size=1) +
+    geom_vline(xintercept = 0, col = "red", linewidth=1) +
+  labs(x = "Marginal effects of Fruit Consumption on\n
+       Satisfaction with Democarcy across age groups") +
+  theme_bw(base_size = 12) 
+p1a      
+```
+]
+
+---
+# Showing (off) effects (2)
+Another great package for illustrating results from stat models is `sjPLot`. See [here](https://strengejacke.github.io/sjPlot/articles/plot_interactions.html) for details how to use it.
+
+I have also used `coefplot::multiplot` to illustrate marginal effects of different variables across different models.
+
+The `marginaleffects` package (which has a dedicated online [book](https://marginaleffects.com/bonus/get_started.html)) makes it easy to obtain marginal effects, but also calculate predictions and contrasts. It can also do graphs.
+
+---
+# Resources on dataviz (with R and ggplot2)
+This is a great [guide](https://pkg.garrickadenbuie.com/gentle-ggplot2/) to using `ggplot2` for dataviz that starts from the basics and goes quite far.
+
+Good books on dataviz with R:
+
+[Kieran Healy, Data Visualization: A Practical Introduction](https://amzn.to/2VaL1Ys)
+
+[Hadley Wickham, ggplot2](https://amzn.to/32gSlTy)
+
+[R Graphics Cookbook](https://r-graphics.org/) 
+
+[Carson Sievert, Interactive Graphs](https://amzn.to/2HErpDU)
+
+---
+# More resources on dataviz (with R and ggplot2)
+Free books and online resources on dataviz:
+
+[Claus Wilke, Fundamentals of Data Visualization](https://clauswilke.com/dataviz/) 
+
+[Styling Graphs with ggplot2](https://simplystatistics.org/posts/2019-08-28-you-can-replicate-almost-any-plot-with-ggplot2/) 
+
+[The BBC Dataviz Style Guide](https://bbc.github.io/rcookbook/#how_to_create_bbc_style_graphics) 
+
+[Guide on Network Visualization](https://kateto.net/network-visualization)
+
+---
+# Beyond static dataviz: Shiny
+Sometimes we have too much data to visualize, too many comparisons to show, or too many statistical results to put in single table.
+
+Occasionally, we also want to let the reader find their own insights in the data we provide.
+
+To overcome the constraints of static data visualizations and academic articles, we can build interactive dashboards.
+
+We can use our `R` skills to do that, with the help of `Shiny`!
+
+---
+# Beyond static dataviz: Shiny
+`Shiny` is a special package 'that makes it easy to build interactive web apps straight from R'. Not only you can build a dashboard using `R`, but you can even host the app for free on a server provided by `RStudio` (there are restrictions on the amount of usage the app received for the free option, but for small-scale projects, this is not a problem. If it is, there are paid options without these limitations.)
+
+For example, [this is a dashboard](https://anonyms.shinyapps.io/EUattitudes/) of EU attitudes and political ideology. This is [another dashboard](https://dimiter.shinyapps.io/polarization/) of political polarization in South Holland. And [this one](https://anonyms.shinyapps.io/asylum/) presents asylum migration statistics (with maps and tables).
+
+The code to generate the dashboards is surprisingly simple: check out examples at my repository on [GitHub](https://github.com/demetriodor/covid-19_mobility)! 
+
+---
+# Beyond stats and dataviz: RMarkdown
+Wouldn't it be nice, if we could mix text, images and `R` code, to produce articles, presentations and even books...
+
+Wouldn't it be even better, if the embedded `R` code would produce all graphs, tables and other results on the fly, every time we generate the document... 
+
+That would bring the idea of open, reproducible science to a new level, no?
+
+It would be great, indeed, and the good news is, we can actually do it!
+
+Enter `RMarkdown`!
+
+---
+# Beyond stats and dataviz: RMarkdown
+To use `RMarkdown`, we install the `rmarkdown` package (we will also need `knitr`). Then from `RStudio` we start a special type of file (`.Rmd`) that allows use to mix text and code. The syntax for the `R` code is the same as before, but code chunks are embedded in the document between special symbols among the text. Once we are ready, we `knit` the document into one of the many supported formats, including `html`, `pdf`, `MS Word`, etc.
+To get started, follow the steps [here](https://rmarkdown.rstudio.com/lesson-1.html).
+
+`r icons::fontawesome("hat-wizard")` **Protip:** For presentations with `RMarkdown`, use the package `xaringan`.
+`r icons::fontawesome("hat-wizard")` **Protip:** [`Quarto`](https://quarto.org/) generalizes the idea behind `RMarkdown` and let's you integrate even different programming languages!  
+
+---
+# Don't worry if things don't always woRk
+
+.center[![trachoma](figs/bob-ross-meme.jpg)]
+
+
+---
+# How to get in touch?
+
+`r icons::fontawesome("envelope")` demetriodor@gmail.com
+
+`r icons::fontawesome("chrome")` [http://dimiter.eu](http://dimiter.eu)
+
+`r icons::academicons("conversation")` @dtoshkov.bsky.social
+
+`r icons::fontawesome$brands$twitter` @DToshkov
+
+`r icons::fontawesome("github")` [github.com/demetriodor](https://github.com/demetriodor/)
+
+`r icons::fontawesome("linkedin")` Dimiter Toshkov
