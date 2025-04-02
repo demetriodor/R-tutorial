@@ -5,5 +5,5 @@ This repository contains the <code>Rmarkdown</code> code for the four parts of m
 <h3> <a href="https://dimiter.eu/Teaching_files/R_tutorial_2025/R-Tutorial-2025-Session-2.html" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-database"></i> Part II. Data wrangling</a></h3>
 <h3> <a href="https://dimiter.eu/Teaching_files/R_tutorial_2025/R-Tutorial-2025-Session-3.html" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-chart-simple"></i> Part III. Data analysis</a></h3>
 <h3> <a href="https://dimiter.eu/Teaching_files/R_tutorial_2025/R-Tutorial-2025-Session-4.html" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-chart-line"></i> Part IV. Data visualziation</a></h3>
-          
 
+<a href="https://dimiter.eu/Teaching_files/R_tutorial_2025/R-Tutorial-2025-Session-1.html" target="_blank" rel="noopener noreferrer"><img src="http://dimiter.eu/Visualizations_files/r.png"></a>   
